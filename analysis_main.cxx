@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     bool process_samples_byGroup = false; //true <-> read grouped samples (if already hadded together), else read individual samples and combine them when creating histograms if needed (default)
 
     //-- M V A --
-    TString classifier_name = "NN"; //'BDT' or 'NN'
+    TString classifier_name = "BDT"; //'BDT' or 'NN'
     bool use_specificMVA_eachYear = false; //true <-> look for year-specific MVA weight files
 
     //-- T E M P L A T E S --
@@ -53,10 +53,10 @@ int main(int argc, char **argv)
 //Naming convention enforced : 2016+2017 <-> "201617" ; etc.; 2016+2017+2018 <-> "Run2"
 //NB : years must be placed in the right order !
 
-	vector<TString> set_lumi_years; //FIXME
+	vector<TString> set_lumi_years;
     set_lumi_years.push_back("2016");
-    // set_lumi_years.push_back("2017");
-    // set_lumi_years.push_back("2018");
+    set_lumi_years.push_back("2017");
+    set_lumi_years.push_back("2018");
 
 
 //-----------------------------------------------------------------------------------------
@@ -120,19 +120,15 @@ int main(int argc, char **argv)
 
     //Signal
     thesamplelist.push_back("VBFgamma"); thesamplegroups.push_back("VBFgamma");
-    // thesamplelist.push_back("GJets"); thesamplegroups.push_back("GJets");
+
+    //GJets
+    thesamplelist.push_back("GJets"); thesamplegroups.push_back("GJets");
 
     //TTbar
-    thesamplelist.push_back("ttbar2l"); thesamplegroups.push_back("ttbar2l");
+    thesamplelist.push_back("ttbar"); thesamplegroups.push_back("ttbar");
 
     //TTG
     thesamplelist.push_back("ttGJets"); thesamplegroups.push_back("ttGJets");
-
-    //DY
-    thesamplelist.push_back("DY"); thesamplegroups.push_back("DY");
-
-    //LLJJ
-    thesamplelist.push_back("LLJJ"); thesamplegroups.push_back("LLJJ");
 
     //DiPhoton
     thesamplelist.push_back("DiPhoton"); thesamplegroups.push_back("DiPhoton");
@@ -150,6 +146,11 @@ int main(int argc, char **argv)
     //QCD
     thesamplelist.push_back("QCD"); thesamplegroups.push_back("QCD");
 
+    //DY
+    // thesamplelist.push_back("DYJetsNLO"); thesamplegroups.push_back("DYJetsNLO");
+
+    //LLJJ
+    // thesamplelist.push_back("LLJJ"); thesamplegroups.push_back("LLJJ");
 
 //---------------------------------------------------------------------------
 // ########  ########  ########       ##     ##    ###    ########   ######
@@ -163,8 +164,33 @@ int main(int argc, char **argv)
 //Variables used in BDT training (and evaluation)
 //For NN, will read necessary input files in logfile, and include them automatically
 
-    std::vector<TString > thevarlist;
-    // thevarlist.push_back("recoZ_Pt");
+    std::vector<TString > thevarlist; //FIXME
+
+    // some inf
+    // thevarlist.push_back("vjj_jj_m");
+    // thevarlist.push_back("vjj_centj_ystar");
+    // thevarlist.push_back("vjj_jj_dphi");
+    // thevarlist.push_back("vjj_lead_qgl");
+    // thevarlist.push_back("vjj_sublead_qgl");
+    // thevarlist.push_back("vjj_v_ystar");
+    // thevarlist.push_back("vjj_jj_pt");
+    // thevarlist.push_back("vjj_v_pt");
+    // thevarlist.push_back("vjj_sublead_pt");
+    // thevarlist.push_back("vjj_jj_deta");
+
+    thevarlist.push_back("vjj_newvarisotropy");
+    thevarlist.push_back("vjj_newvarcircularity");
+    thevarlist.push_back("vjj_newvarsphericity");
+    thevarlist.push_back("vjj_newvaraplanarity");
+    thevarlist.push_back("vjj_newvarC");
+    thevarlist.push_back("vjj_newvarD");
+    thevarlist.push_back("vjj_newvarjj_vdphi");
+    thevarlist.push_back("vjj_newvarsublead_dphivj");
+    thevarlist.push_back("vjj_newvarlead_dphivj");
+    thevarlist.push_back("vjj_newvarsublead_detavj");
+    thevarlist.push_back("vjj_newvarlead_detavj");
+    thevarlist.push_back("vjj_newvarleadJet_qgl");
+    thevarlist.push_back("vjj_newvarvjj_deta");
 
 
 //---------------------------------------------------------------------------
@@ -202,8 +228,6 @@ int main(int argc, char **argv)
     set_v_add_var_names.push_back("vjj_vjj_D");
     set_v_add_var_names.push_back("vjj_htsoft");
     set_v_add_var_names.push_back("vjj_centhtsoft");
-    set_v_add_var_names.push_back("vjj_nextraj");
-    set_v_add_var_names.push_back("vjj_ncentj");
 
 
 //---------------------------------------------------------------------------
@@ -292,7 +316,7 @@ int main(int argc, char **argv)
     bool create_templates = false; //Create MVA templates
 
 //-----------------    CONTROL HISTOGRAMS
-    bool create_inputVar_histograms = true; //Create histograms of input variables, for plotting
+    bool create_inputVar_histograms = false; //Create histograms of input variables, for plotting
 
 //-----------------    PLOTS
     TString plotChannel = ""; //Can choose to plot particular subchannel //uu, ue, ee, ...
@@ -301,10 +325,8 @@ int main(int argc, char **argv)
         bool prefit = true; //true <-> plot prefit templates ; else postfit (requires combine output file)
         bool use_combine_file = false; //true <-> use MLF output file from Combine (can get postfit plots, total error, etc.)
 
-    bool draw_input_vars = true; //Plot input variables
+    bool draw_input_vars = false; //Plot input variables
         bool draw_input_allChannels = false; //true <-> also draw for eachs split channel
-
-    bool compare_template_shapes = false;
 
 //-----------------    OTHER
 

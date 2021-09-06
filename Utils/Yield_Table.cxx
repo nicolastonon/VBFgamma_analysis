@@ -190,6 +190,9 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     			continue;
     		}
 
+            bool isData = false;
+            if(v_samples[isample] == "DATA") {isData = true;}
+
     		// cout<<FBLU("Sample : "<<v_samples[isample]<<"")<<endl;
 
     		TFile* f = new TFile(filepath);
@@ -199,17 +202,48 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
             t->SetBranchStatus("*", 0); //disable all branches, speed up reading
 
             //FIXME
-    		Double_t weight = 1., weight_avg = 0.; //Event weight (gen-level weight, smeared by systematics)
-            Float_t eventMCFactor, weightMENominal; //Sample-dependent factor computed at Potato-level (lumi*xsec/SWE)
-            t->SetBranchStatus("eventWeight", 1);
-    		t->SetBranchAddress("eventWeight", &weight);
-            t->SetBranchStatus("eventMCFactor", 1);
-    		t->SetBranchAddress("eventMCFactor", &eventMCFactor);
-            t->SetBranchStatus("weightMENominal", 1);
-    		t->SetBranchAddress("weightMENominal", &weightMENominal);
+    		// Double_t weight = 1., weight_avg = 0.; //Event weight (gen-level weight, smeared by systematics)
+            // Float_t eventMCFactor, weightMENominal; //Sample-dependent factor computed at Potato-level (lumi*xsec/SWE)
+            // t->SetBranchStatus("eventWeight", 1);
+    		// t->SetBranchAddress("eventWeight", &weight);
+            // t->SetBranchStatus("eventMCFactor", 1);
+    		// t->SetBranchAddress("eventMCFactor", &eventMCFactor);
+            // t->SetBranchStatus("weightMENominal", 1);
+    		// t->SetBranchAddress("weightMENominal", &weightMENominal);
+
+            Float_t weight;
+            Int_t vjj_nlumiWeights = 113;
+            Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
+            if(!isData)
+            {
+                t->SetBranchStatus("vjj_photon_effWgt", 1); t->SetBranchAddress("vjj_photon_effWgt", &vjj_photon_effWgt);
+                t->SetBranchStatus("vjj_weight", 1); t->SetBranchAddress("vjj_weight", &vjj_weight);
+                t->SetBranchStatus("vjj_lumiWeights", 1); t->SetBranchAddress("vjj_lumiWeights", vjj_lumiWeights);
+                t->SetBranchStatus("vjj_mu_effWgt", 1); t->SetBranchAddress("vjj_mu_effWgt", &vjj_mu_effWgt);
+            }
+
+            Bool_t vjj_isGood;
+            Int_t vjj_fs, vjj_trig;
+            Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
+            t->SetBranchStatus("vjj_v_eta", 1); t->SetBranchAddress("vjj_v_eta", &vjj_v_eta);
+            t->SetBranchStatus("vjj_jj_deta", 1); t->SetBranchAddress("vjj_jj_deta", &vjj_jj_deta);
+            t->SetBranchStatus("vjj_jj_m", 1); t->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
+            t->SetBranchStatus("vjj_v_pt", 1); t->SetBranchAddress("vjj_v_pt", &vjj_v_pt);
+            t->SetBranchStatus("vjj_isGood", 1); t->SetBranchAddress("vjj_isGood", &vjj_isGood);
+            t->SetBranchStatus("vjj_fs", 1); t->SetBranchAddress("vjj_fs", &vjj_fs);
+            t->SetBranchStatus("vjj_jj_m", 1); t->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
+            t->SetBranchStatus("vjj_lead_pt", 1); t->SetBranchAddress("vjj_lead_pt", &vjj_lead_pt);
+            t->SetBranchStatus("vjj_sublead_pt", 1); t->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
+            t->SetBranchStatus("vjj_trig", 1); t->SetBranchAddress("vjj_trig", &vjj_trig);
+
+            Bool_t vjj_photonIsMatched;
+            if(v_samples[isample] == "QCD" || v_samples[isample] == "ttbar")
+            {
+                t->SetBranchStatus("vjj_photonIsMatched", 1); t->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
+            }
 
             //--- Cut on relevant event selection (e.g. 3l SR, ttZ CR, etc.) -- stored as Char_t
-            Char_t is_goodCategory; //Categ. of event
+            // Char_t is_goodCategory; //Categ. of event
 
 
      // ###### #    # ###### #    # #####    #       ####   ####  #####
@@ -222,22 +256,32 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     		int nentries = t->GetEntries();
     		for(int ientry=0; ientry<nentries; ientry++)
     		{
-    			weight=1.; eventMCFactor = 1.;
+    			weight=1.;
 
     			t->GetEntry(ientry);
 
-                if(channel == "uuu" && chan != 0) {continue;}
-                if(channel == "uue" && chan != 1) {continue;}
-                if(channel == "eeu" && chan != 2) {continue;}
-                if(channel == "eee" && chan != 3) {continue;}
+                // if(channel == "uuu" && chan != 0) {continue;}
+                // if(channel == "uue" && chan != 1) {continue;}
+                // if(channel == "eeu" && chan != 2) {continue;}
+                // if(channel == "eee" && chan != 3) {continue;}
 
                 //--- Cut on category value
-                if(category != "" && !is_goodCategory) {continue;}
+                // if(category != "" && !is_goodCategory) {continue;}
+
+                //FIXME
+                float ptCut = 200, fs = 22, mjj=200;
+                bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
+                if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                if(!pass) {continue;}
 
                 // if(isnan(weight*eventMCFactor) || isinf(weight*eventMCFactor))
                 // {
                 //     cout<<BOLD(FRED("* Found event with weight*eventMCFactor = "<<weight<<"*"<<eventMCFactor<<" ; remove it..."))<<endl; break; //continue;
                 // }
+
+                if(!isData) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;} //FIXME
 
                 v_yields_proc_allYears[isample]+= weight;
                 v_statErr_proc_allYears[isample]+= weight*weight;
@@ -429,21 +473,16 @@ int main(int argc, char **argv)
         v_samples.push_back("DATA"); v_label.push_back("DATA");
         v_samples.push_back("VBFgamma"); v_label.push_back("VBFgamma");
         v_samples.push_back("GJets"); v_label.push_back("GJets");
-        v_samples.push_back("ttbar2l"); v_label.push_back("ttbar2l");
+        v_samples.push_back("ttbar"); v_label.push_back("ttbar");
         v_samples.push_back("ttGJets"); v_label.push_back("ttGJets");
-        v_samples.push_back("DY"); v_label.push_back("DY");
-        v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
         v_samples.push_back("DiPhoton"); v_label.push_back("DiPhoton");
         v_samples.push_back("WJetsToLNu"); v_label.push_back("WJetsToLNu");
         v_samples.push_back("WJetsToQQ"); v_label.push_back("WJetsToQQ");
         v_samples.push_back("ZGTo2LG"); v_label.push_back("ZGTo2LG");
         v_samples.push_back("WGToLNuG"); v_label.push_back("WGToLNuG");
         v_samples.push_back("QCD"); v_label.push_back("QCD");
-        v_samples.push_back("ttWW"); v_label.push_back("tX");
-        v_samples.push_back("ttWZ"); v_label.push_back("tX");
-        v_samples.push_back("ttZH"); v_label.push_back("tX");
-        v_samples.push_back("ttWH"); v_label.push_back("tX");
-        v_samples.push_back("tttt"); v_label.push_back("tX");
+        // v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
+        // v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
     }
 
 //--------------------------------------------

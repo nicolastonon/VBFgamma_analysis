@@ -173,7 +173,7 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
     }
 
 	//-- Get colors
-    int color_scheme = 2; //Check color scheme definitions directly in Get_Samples_Colors() //FIXME
+    int color_scheme = 0; //Check color scheme definitions directly in Get_Samples_Colors() //FIXME
 	color_list.resize(sample_list.size());
 	Get_Samples_Colors(color_list, v_custom_colors, sample_list, sample_groups, color_scheme); //Read hard-coded sample colors
 
@@ -427,6 +427,9 @@ void VBFgamma_analysis::Train_BDT(TString channel)
 
 	usleep(1000000); //Pause for 1s (in microsec)
 
+    if(var_list.size() <= 1) {cout<<BOLD(FRED("ERROR: cannot train BDT with <= 1 input variable ! Abort !"))<<endl; return;}
+
+
 //--------------------------------
 //  ####  #    # #####  ####
 // #    # #    #   #   #
@@ -455,7 +458,7 @@ void VBFgamma_analysis::Train_BDT(TString channel)
     if(cat_tmp == "") {cat_tmp = "1";}
 
     tmp = cat_tmp;
-    // tmp = cat_tmp + " && !TMath::IsNaN(mTW) && !std::isinf(abs(TopZsystem_M))"; //TMP fix... because trained on 0jet events ?
+    // tmp = cat_tmp + " && !TMath::IsNaN(mTW) && !std::isinf(abs(TopZsystem_M))"; //Hardcoded: can remove here events for which a given var is nan/inf...
 
 	//--- Define additionnal cuts
 	for(int ivar=0; ivar<v_cut_name.size(); ivar++)
@@ -570,14 +573,8 @@ void VBFgamma_analysis::Train_BDT(TString channel)
             //-- Protections
             if(sample_list[isample] == "DATA") {continue;} //Don't use data for training
 
-            //Can hardcode here the backgrounds against which to train, instead of considering full list of samples
-            // if(signal_process == "tZq")
-            // {
-            //     if(!samplename_tmp.Contains("tZq") && !samplename_tmp.EndsWith("ttZ") && !samplename_tmp.Contains("ttH") && samplename_tmp.Contains("ttW") && samplename_tmp.Contains("WZ") && samplename_tmp.Contains("ZZ4l") && samplename_tmp.Contains("TTbar_DiLep") ) {continue;}
-            // }
-
             //-- TMP sample list
-            if(samplename_tmp != "tZq" && samplename_tmp != "ttZ" && samplename_tmp != "ttH" && samplename_tmp != "ttW" && samplename_tmp != "WZ" && samplename_tmp != "ZZ4l" && samplename_tmp != "TTbar_DiLep" ) {continue;}
+            // if(samplename_tmp != "VBFgamma" && samplename_tmp != "XXX") {continue;}
 
     		cout<<endl<<"-- Sample : "<<sample_list[isample]<<endl;
 
@@ -610,46 +607,25 @@ void VBFgamma_analysis::Train_BDT(TString channel)
             Double_t signalWeight     = 1.0;
             Double_t backgroundWeight = 1.0;
 
+            //-- Weight definition
+            TString weightExp = "vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt";
+            if(use_relative_weights) {weightExp = "fabs(" + weightExp + ")";}
+
             //-- Choose between absolute/relative weights for training
     		if(samplename_tmp.Contains(signal_process) )
     		{
                 nEvents_sig+= tree->GetEntries(mycut); myDataLoader->AddSignalTree(tree, signalWeight);
 
-    			if(use_relative_weights)
-    			{
-                    // TString weightExp = "weight";
-                    TString weightExp = "eventWeight*eventMCFactor";
-    				myDataLoader->SetSignalWeightExpression(weightExp);
-    				cout<<"Signal sample : "<<samplename_tmp<<" / Weight expression : "<<weightExp<<endl<<endl;
-    			}
-    			else
-    			{
-                    // TString weightExp = "fabs(weight)";
-                    TString weightExp = "fabs(eventWeight*eventMCFactor)";
-    				myDataLoader->SetSignalWeightExpression(weightExp);
-    				cout<<"Signal sample : "<<samplename_tmp<<" / Weight expression : "<<weightExp<<endl<<endl;
-    			}
+                myDataLoader->SetSignalWeightExpression(weightExp);
+                cout<<"Signal sample : "<<samplename_tmp<<" / Weight expression : "<<weightExp<<endl<<endl;
     		}
     		else
     		{
                 nEvents_bkg+= tree->GetEntries(mycut); myDataLoader->AddBackgroundTree(tree, backgroundWeight);
 
-                if(use_relative_weights)
-    			{
-                    // TString weightExp = "weight";
-                    TString weightExp = "eventWeight*eventMCFactor";
-    				myDataLoader->SetBackgroundWeightExpression(weightExp);
-    				cout<<"Background sample : "<<samplename_tmp<<" / Weight expression : "<<weightExp<<endl;
-    			}
-    			else
-    			{
-                    // TString weightExp = "fabs(weight)";
-                    TString weightExp = "fabs(eventWeight*eventMCFactor)";
-    				myDataLoader->SetBackgroundWeightExpression(weightExp);
-    				cout<<"Background sample : "<<samplename_tmp<<" / Weight expression : "<<weightExp<<endl;
-    			}
+                myDataLoader->SetBackgroundWeightExpression(weightExp);
+                cout<<"Background sample : "<<samplename_tmp<<" / Weight expression : "<<weightExp<<endl;
     		}
-
         } //samples loop
     } //year loop
 
@@ -688,7 +664,7 @@ void VBFgamma_analysis::Train_BDT(TString channel)
 	cout<<BOLD(FBLU("-- Requesting "<<nTesting_Events_bkg<<" Testing events [BACKGROUND]"))<<endl;
 	cout<<BOLD(FBLU("==================================="))<<endl<<endl<<endl<<endl;
 
-    myDataLoader->PrepareTrainingAndTestTree(mycut, mycut, "nTrain_Signal="+nTraining_Events_sig+":nTrain_Background="+nTraining_Events_bkg+":nTest_Signal="+nTesting_Events_sig+":nTest_Background="+nTesting_Events_bkg+":SplitMode=Random:EqualTrainSample:!V"); //EqualTrainSample = ?
+    myDataLoader->PrepareTrainingAndTestTree(mycut, mycut, "nTrain_Signal="+nTraining_Events_sig+":nTrain_Background="+nTraining_Events_bkg+":nTest_Signal="+nTesting_Events_sig+":nTest_Background="+nTesting_Events_bkg+":SplitMode=Random:!V");
 
 	//-- for quick testing -- few events
 	// myDataLoader->PrepareTrainingAndTestTree(mycut, mycut, "nTrain_Signal=10:nTrain_Background=10:nTest_Signal=10:nTest_Background=10:SplitMode=Random:NormMode=NumEvents:!V");
@@ -720,18 +696,10 @@ void VBFgamma_analysis::Train_BDT(TString channel)
 //--------------------------------------------
 
     TString method_options = "";
+    //Example available options: "!H:!V:NTrees=200:BoostType=Grad:Shrinkage=0.10:!UseBaggedBoost:nCuts=200:MinNodeSize=5%:MaxDepth=8:NegWeightTreatment=PairNegWeightsGlobal:CreateMVAPdfs:DoBoostMonitor=True" ...
 
-    //~ttH2017
-    // method_options= "!H:!V:NTrees=200:BoostType=Grad:Shrinkage=0.10:!UseBaggedBoost:nCuts=200:MinNodeSize=5%:NNodesMax=5:MaxDepth=8:NegWeightTreatment=PairNegWeightsGlobal:CreateMVAPdfs:DoBoostMonitor=True";
-
-    //tHq2017
-    // method_options = "!H:!V:NTrees=200:nCuts=40:MaxDepth=4:BoostType=Grad:Shrinkage=0.10:!UseBaggedGrad:NegWeightTreatment=PairNegWeightsGlobal:CreateMVAPdfs";
-
-    //Testing
-    // method_options = "!H:!V:NTrees=200:nCuts=40:MaxDepth=4:MinNodeSize=5%:UseBaggedBoost=True:BaggedSampleFraction=0.5:BoostType=Grad:Shrinkage=0.10";
-
-    //Quick test
-    // method_options = "!H:!V:NTrees=20:nCuts=5:MaxDepth=1:MinNodeSize=10%:UseBaggedBoost=True:BaggedSampleFraction=0.5:BoostType=Grad:Shrinkage=0.10";
+    //-- TEST
+    method_options= "!H:!V:NTrees=200:BoostType=Grad:Shrinkage=0.10:!UseBaggedBoost:nCuts=200:MinNodeSize=5%:MaxDepth=8";
 
 
 //--------------------------------------------
@@ -743,7 +711,7 @@ void VBFgamma_analysis::Train_BDT(TString channel)
  //   #   #    # #    # # #    #         #   ######  ####    #         ######   ##   #    # ######
 //--------------------------------------------
 
-	if(classifier_name == "BDT") {factory->BookMethod(myDataLoader, TMVA::Types::kBDT, method_title, method_options);} //Book BDT -- pass dataLoader and options as arg
+	factory->BookMethod(myDataLoader, TMVA::Types::kBDT, method_title, method_options); //Book BDT -- pass dataLoader and options as arg
 
 	output_file->cd();
 
@@ -885,7 +853,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
         array_prefiringWeight = new double[2];
         array_Btag = new double[16];
         array_jetPileupID = new double[4];
-        // array_fakeFactor = new double[2]; //David's FR
         array_fakeFactor = new double[12]; //ttH FR
         array_ME = new double[6];
         array_alphaS = new double[2];
@@ -1224,6 +1191,12 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                 tree->SetBranchStatus("vjj_sublead_pt", 1); tree->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
                 tree->SetBranchStatus("vjj_trig", 1); tree->SetBranchAddress("vjj_trig", &vjj_trig);
 
+                Bool_t vjj_photonIsMatched;
+                if(sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
+                {
+                    tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
+                }
+
                 //-- Reserve 1 float for each systematic weight (also for nominal to keep ordering, but not used)
     			vector<Double_t*> v_double_systWeights(syst_list.size(), NULL);
     			for(int isyst=0; isyst<syst_list.size(); isyst++)
@@ -1314,7 +1287,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
     			// cout<<"* Tree '"<<systTree_list[itree]<<"' :"<<endl;
 
-    			// int nentries = 1000;
     			int nentries = tree->GetEntries();
                 if(nentries_max > 0 && nentries > nentries_max)
                 {
@@ -1330,7 +1302,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     			for(int ientry=0; ientry<nentries; ientry++)
     			{
     				// cout<<FGRN("ientry "<<ientry<<"")<<endl;
-                    if(ientry%5000==0) {cout<<DIM("Entry "<<ientry<<"")<<endl;} //Very slow, print progress
+                    if(ientry%50000==0) {cout<<DIM("Entry "<<ientry<<"")<<endl;} //Very slow, print progress
 
                     // std::fill(var_list_floats.begin(), var_list_floats.end(), 0); //Reset vectors reading inputs to 0
 
@@ -1346,7 +1318,9 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                     float ptCut = 200, fs = 22, mjj=200;
                     bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
                     bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                    bool pass = ( (vjj_trig == 2) || (vjj_trig==3 && !lowPtCut) ) && (generalCuts && vjj_v_pt > ptCut);
+                    bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
+                    if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                    if(!pass) {continue;}
 
                     //--- Cut on category flag
                     if(!is_goodCategory) {continue;}
@@ -2560,14 +2534,13 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
             // cout<<"v_MC_samples_legend["<<i<<"] "<<v_MC_samples_legend[i]<<endl;
 			if(!v_MC_histo[i]) {continue;} //Fakes templates can be null
 
-            qw->AddEntry(v_MC_histo[i], v_MC_samples_legend[i], "f");
-
-            // if(v_MC_samples_legend[i].Contains("tZq")) {qw->AddEntry(v_MC_histo[i], "tZq", "f");}
+            if(v_MC_samples_legend[i].Contains("ttbar")) {qw->AddEntry(v_MC_histo[i], "W, Top, VV", "f");}
+            else if(v_MC_samples_legend[i].Contains("WJets") || v_MC_samples_legend[i].Contains("ZG") || v_MC_samples_legend[i].Contains("WG") || v_MC_samples_legend[i].Contains("ttG")) {continue;}
+            else if(v_MC_samples_legend[i].Contains("DiPhoton")) {qw->AddEntry(v_MC_histo[i], "#gamma#gamma", "f");}
+            else if(v_MC_samples_legend[i].Contains("VBFgamma")) {qw->AddEntry(v_MC_histo[i], "VBF #gamma", "f");}
+            else if(v_MC_samples_legend[i].Contains("GJets")) {qw->AddEntry(v_MC_histo[i], "#gamma+jets", "f");}
+            else {qw->AddEntry(v_MC_histo[i], v_MC_samples_legend[i], "f");}
 		}
-
-        // qw->SetTextFont(43);
-        // gStyle->SetTextFont(72);
-        // qw->AddEntry(v_MC_histo[0], ((TString) "\\text{a}"), "L"); //test, to remove
 
 
 // #####  #####    ##   #    #
@@ -2837,6 +2810,9 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 		histo_ratio_data->SetMarkerStyle(20);
 		histo_ratio_data->SetMarkerSize(1.2); //changed from 1.4
         histo_ratio_data->GetXaxis()->SetTitleSize(0.05);
+
+        //FIXME
+        TGaxis::SetExponentOffset(-0.08, 0., "y");
 
         //-- If a point is outside the y-range of the ratio pad defined by SetMaximum/SetMinimum(), it disappears with its error
         //-- Trick: fill 2 histos with points either above/below y-range, to plot some markers indicating missing points (cleaner)
@@ -3133,7 +3109,6 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 
 		float l = c1->GetLeftMargin();
 		float t = c1->GetTopMargin();
-        l+= 0.08;
 
 		TString cmsText = "CMS";
 		TLatex latex;

@@ -30,14 +30,14 @@ OBJS = $(SRCS:.cxx=.o) #Object files are all files with .o extension, which have
 # LIB = myLib.so
 
 MY_ANALYSIS = analysis_main.exe #Name of executable file
+YIELD = Yield_Table.exe
 # ROCS = ROCS/Compare_ROC_curves.exe
-# YIELD = Yield_Table.exe
 # SPLIT = Split_FullSamples.exe
 
 # .PHONY : $(wildcard *.o)  #Force to always recompile object
 
 #Instructions
-all: $(MY_ANALYSIS) #$(ROCS) $(YIELD) $(SPLIT)
+all: $(MY_ANALYSIS) $(YIELD) #$(ROCS) $(SPLIT)
 
 #Obtain executables from object files
 $(MY_ANALYSIS):Utils/CMSSW_TensorFlow.o Utils/TFModel.o Utils/Helper.o analysis_main.o VBFgamma_analysis.o #ROCS/ROC_Plotter.o
