@@ -767,17 +767,12 @@ bool Apply_CommandArgs_Choices(int argc, char **argv, vector<TString>& v_lumiYea
         else if(arg1 == "201718") {v_lumiYear.resize(0); v_lumiYear.push_back("2017"); v_lumiYear.push_back("2018");}
         else if(arg1 == "run2") {v_lumiYear.resize(0); v_lumiYear.push_back("2016"); v_lumiYear.push_back("2017"); v_lumiYear.push_back("2018");}
 
-        else if(arg1 == "tzq") {region_choice = "tzq";}
-        else if(arg1 == "ttz") {region_choice = "ttz";}
-        else if(arg1 == "ttz4l") {region_choice = "ttz4l";}
-        else if(arg1 == "twz") {region_choice = "twz";}
-        else if(arg1 == "signal") {region_choice = "signal";}
-        else if(arg1 == "xg" || arg1 == "vg") {region_choice = "xg";}
-        else if(arg1 == "zz") {region_choice = "zz";}
-        else if(arg1 == "tt") {region_choice = "tt";}
-        else if(arg1 == "wz") {region_choice = "wz";}
-        else if(arg1 == "dy") {region_choice = "dy";}
-        else if(arg1 == "tx") {region_choice = "tX";} //Obsolete
+        else if(arg1 == "sr_highvpt") {region_choice = "SR_HighVPt";}
+        else if(arg1 == "sr_lowvpt") {region_choice = "SR_LowVPt";}
+        else if(arg1 == "cree_highvpt") {region_choice = "CRee_HighVPt";}
+        else if(arg1 == "cree_lowvpt") {region_choice = "CRee_LowVPt";}
+        else if(arg1 == "crmm_highvpt") {region_choice = "CRmm_HighVPt";}
+        else if(arg1 == "crmm_lowvpt") {region_choice = "CRmm_LowVPt";}
 
         else if(arg1.Contains("nn") || arg1=="Zpt") {template_name = (TString) argv[1];}
 
@@ -805,17 +800,12 @@ bool Apply_CommandArgs_Choices(int argc, char **argv, vector<TString>& v_lumiYea
             else if(arg2 == "201718") {v_lumiYear.resize(0); v_lumiYear.push_back("2017"); v_lumiYear.push_back("2018");}
             else if(arg2 == "run2") {v_lumiYear.resize(0); v_lumiYear.push_back("2016"); v_lumiYear.push_back("2017"); v_lumiYear.push_back("2018");}
 
-            else if(arg2 == "tzq") {region_choice = "tzq";}
-            else if(arg2 == "ttz") {region_choice = "ttz";}
-            else if(arg2 == "ttz4l") {region_choice = "ttz4l";}
-            else if(arg2 == "twz") {region_choice = "twz";}
-            else if(arg2 == "signal") {region_choice = "signal";}
-            else if(arg2 == "xg" || arg2 == "vg") {region_choice = "xg";}
-            else if(arg2 == "zz") {region_choice = "zz";}
-            else if(arg2 == "tt") {region_choice = "tt";}
-            else if(arg2 == "wz") {region_choice = "wz";}
-            else if(arg2 == "dy") {region_choice = "dy";}
-            else if(arg2 == "tx") {region_choice = "tx";} //Obsolete
+            else if(arg2 == "sr_highvpt") {region_choice = "SR_HighVPt";}
+            else if(arg2 == "sr_lowvpt") {region_choice = "SR_LowVPt";}
+            else if(arg2 == "cree_highvpt") {region_choice = "CRee_HighVPt";}
+            else if(arg2 == "cree_lowvpt") {region_choice = "CRee_LowVPt";}
+            else if(arg2 == "crmm_highvpt") {region_choice = "CRmm_HighVPt";}
+            else if(arg2 == "crmm_lowvpt") {region_choice = "CRmm_LowVPt";}
 
             else if(arg2.Contains("nn") || arg2=="Zpt") {template_name = (TString) argv[2];}
 
@@ -873,7 +863,7 @@ void Get_Samples_Colors(vector<int>& v_colors, std::vector<TColor*>& v_custom_co
 		{
             if(v_groups[isample] == "VBFgamma") {v_colors[isample] = v_custom_colors[6]->GetNumber();}
 
-            else if(v_groups[isample] == "GJets") {v_colors[isample] = v_custom_colors[11]->GetNumber();}
+            else if(v_groups[isample].BeginsWith("GJets")) {v_colors[isample] = v_custom_colors[11]->GetNumber();}
 
             else if(v_groups[isample] == "DiPhoton") {v_colors[isample] = v_custom_colors[3]->GetNumber();}
 
@@ -886,10 +876,12 @@ void Get_Samples_Colors(vector<int>& v_colors, std::vector<TColor*>& v_custom_co
 
             else if(v_groups[isample] == "QCD") {v_colors[isample] = v_custom_colors[18]->GetNumber();}
 
-            else if(v_groups[isample] == "DYJetsNLO") {v_colors[isample] = v_custom_colors[16]->GetNumber();}
+            else if(v_groups[isample].Contains("DY")) {v_colors[isample] = v_custom_colors[16]->GetNumber();}
 
             else if(v_groups[isample] == "LLJJ") {v_colors[isample] = v_custom_colors[17]->GetNumber();}
-		}
+
+            else {v_colors[isample] = isample;}
+        }
     }
 
     else if(color_scheme == 2) //TESTING
@@ -1608,27 +1600,20 @@ TString Get_Region_Label(TString region, TString variable)
     TString label = "";
 
     //-- Region-dependent label //Order matters
-    region.ToLower();
-    if(region=="signal" || region=="sr") {label = "\\text{SR-3}\\ell";} //Main SR
-    else if(region=="ttz4l") {label = "\\text{SR-t}\\bar{\\text{t}}\\text{Z-4}\\ell";} //NB: if using a TMathText (like \ell), must use TMathText for all math symbols
-    else if(region=="tzq") {label = "SR-tZq";}
-    else if(region=="ttz") {label = "SR-t#bar{t}Z";}
-    else if(region=="xg") {label = "X#gamma CR";}
-    else if(region=="zz") {label = "ZZ CR";}
-    else if(region=="tx") {label = "tX CR";}
-    else if(region=="tt") {label = "t#bar{t} CR";}
-    else if(region=="wz") {label = "WZ CR";}
-    else if(region=="dy") {label = "DY CR";}
+    // region.ToLower();
+    // if(region=="signal" || region=="sr") {label = "\\text{SR-3}\\ell";} //Main SR
 
-    //-- Variable-dependent label //Order matters
-    if(variable.Contains("SRtZq")) {label = "SR-tZq";}
-    // else if(variable.Contains("SRttZ4l")) {label = "SR-t#bar{t}Z-4l";}
-    else if(variable.Contains("SRttZ4l")) {label = "\\text{SR-t}\\bar{\\text{t}}\\text{Z-4}\\ell";} //NB: if using a TMathText (like \ell), must use TMathText for all math symbols
-    else if(variable.Contains("SRttZ")) {label = "SR-t#bar{t}Z";}
-    else if(variable.Contains("SRother")) {label = "SR-Other";}
-    else if(variable.Contains("CRWZ")) {label = "WZ CR";}
-    else if(variable.Contains("CRZZ")) {label = "ZZ CR";}
-    else if(variable.Contains("CRDY")) {label = "Z/#gamma CR";}
+    if(region.Contains("SR")) {label = "#splitline{SR}";} //NB: if using a TMathText (like \ell), must use TMathText for all math symbols
+    else if(region.Contains("CR"))
+    {
+        label = "#splitline{DY";
+        if(region.Contains("ee")) {label+= " #rightarrow ee";}
+        else if(region.Contains("mm")) {label+= " #rightarrow #mu#mu";}
+        label+= " CR}";
+    }
+
+    if(region.Contains("HighVPt")) {label+= "{(High-p_{T})}";}
+    else if(region.Contains("LowVPt")) {label+= "{(Low-p_{T})}";}
 
     return label;
 }

@@ -1,25 +1,47 @@
-#FIXME
+#-- Auto-run code in different configurations
+
+#-- SETTINGS
+#---------------------------------------
+ANALYSIS=true #Run analysis code
+YIELDS=true #Run yield code
+
+years=(Run2) #Select data-taking years
+# years=(2016 2017 2018) #Select data-taking years
+
+regions=(SR_HighVPt SR_LowVPt CRee_HighVPt CRee_LowVPt CRmm_HighVPt CRmm_LowVPt) #Select regions (= event categories)
+
+#---------------------------------------
 
 make
 
 #---------------------------------------
 
-#-- All years for region specified in main ('signal' by default)
+#-- ANALYSIS
 
-# ./analysis_main.exe 2016
-# ./analysis_main.exe 2017
-# ./analysis_main.exe 2018
-./analysis_main.exe Run2
+if [ "$ANALYSIS" = true ]; then
+    for yearname in ${years[@]}
+    do
+        for region in ${regions[@]}
+        do
+            echo "RUNNING: [./analysis_main.exe $yearname $region]"
+            ./analysis_main.exe $yearname $region
+        done
+
+    done
+fi
 
 #---------------------------------------
+#-- YIELDS
 
-#-- All regions
+if [ "$YIELDS" = true ]; then
+    for yearname in ${years[@]}
+    do
+        for region in ${regions[@]}
+        do
+            echo "RUNNING: [./Yield_Table.exe $yearname $region]"
+            ./Yield_Table.exe $yearname $region
+        done
 
-#./analysis_main.exe 2016 ttZ4l
-
-#---------------------------------------
-#-- Make yield tables
-
-# ./Yield_Table.exe Run2 signal
-
+    done
+fi
 #---------------------------------------

@@ -55,7 +55,7 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
 	this->region = region;
 
     //FIXME
-    if(region != "HighVPt" && region != "LowVPt") {cout<<BOLD(FRED("Wrong region "<<region<<" ! Abort !"))<<endl; this->stop_program = true;}
+    // if(region != "HighVPt" && region != "LowVPt") {cout<<BOLD(FRED("Wrong region "<<region<<" ! Abort !"))<<endl; this->stop_program = true;}
 
     this->use_paperStyle = use_paperStyle;
 
@@ -1200,7 +1200,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                 // tree->SetBranchStatus("vjj_sublead_pt", 1); tree->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
 
                 Char_t vjj_photonIsMatched;
-                if(sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
+                if(region.Contains("SR") && sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
                 {
                     tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
                 }
@@ -1343,24 +1343,32 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         else if(total_var_list[ivar] == "vjj_njets") {*total_var_pfloats[ivar] = (float) *njets;}
                     }
 
-                    if(region == "HighVPt")
+                    bool pass = false;
+                    if(region.Contains("HighVPt"))
                     {
-                        float ptCut = 200, fs = 22, mjj=200;
+                        float ptCut = 200, mjj=200;
                         bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                        bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                        bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
-                        if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                        if(!pass) {continue;}
+                        bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                        pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
                     }
-                    else if(region == "LowVPt")
+                    else if(region.Contains("LowVPt"))
                     {
                         float ptCut = 75, fs = 22, mjj=500;
                         bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > ptCut);
-                        bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                        bool pass = vjj_trig != 2 && lowPtCut && generalCuts;
-                        if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                        if(!pass) {continue;}
+                        bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                        pass = vjj_trig != 2 && lowPtCut && generalCuts;
                     }
+                    if(region.Contains("SR"))
+                    {
+                        if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                        if(vjj_fs != 22) {continue;}
+                    }
+                    else if(region.Contains("CR"))
+                    {
+                        if(region.Contains("ee") && vjj_fs != 121) {continue;}
+                        else if(region.Contains("mm") && vjj_fs != 169) {continue;}
+                    }
+                    if(!pass) {continue;}
 
                     //--- Cut on category flag
                     // if(!is_goodCategory) {continue;}
@@ -2543,8 +2551,8 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 
         //NB: for best style, better to adjust legend size exactly to the entries (too much space --> non uniform)
         int n_columns = ceil(nSampleGroups/2.) > 6 ? 6 : ceil(nSampleGroups/2.); //ceil = upper int
-        float x_left = 0.94-n_columns*0.12; //Each column allocated same x-space //0.12 needed for most crowded plots
-        if(x_left < 0.4) {x_left = 0.4;} //Leave some space for region label
+        float x_left = 0.94-n_columns*0.10; //Each column allocated same x-space //0.12 needed for most crowded plots
+        if(x_left < 0.45) {x_left = 0.45;} //Leave some space for region label
         n_columns = 3; //HARDCODED FOR NOW
 
         float ylegend = 0.78; //Default
@@ -2578,10 +2586,11 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 			if(!v_MC_histo[i]) {continue;} //Fakes templates can be null
 
             if(v_MC_samples_legend[i].Contains("ttbar")) {qw->AddEntry(v_MC_histo[i], "W, Top, VV", "f");}
-            else if(v_MC_samples_legend[i].Contains("WJets") || v_MC_samples_legend[i].Contains("ZG") || v_MC_samples_legend[i].Contains("WG") || v_MC_samples_legend[i].Contains("ttG")) {continue;}
             else if(v_MC_samples_legend[i].Contains("DiPhoton")) {qw->AddEntry(v_MC_histo[i], "#gamma#gamma", "f");}
             else if(v_MC_samples_legend[i].Contains("VBFgamma")) {qw->AddEntry(v_MC_histo[i], "VBF #gamma", "f");}
-            else if(v_MC_samples_legend[i].Contains("GJets")) {qw->AddEntry(v_MC_histo[i], "#gamma+jets", "f");}
+            else if(v_MC_samples_legend[i].BeginsWith("GJets")) {qw->AddEntry(v_MC_histo[i], "#gamma+jets", "f");}
+            else if(v_MC_samples_legend[i].Contains("DY")) {qw->AddEntry(v_MC_histo[i], "DY+jets", "f");}
+            else if(v_MC_samples_legend[i].Contains("WJets") || v_MC_samples_legend[i].Contains("ZG") || v_MC_samples_legend[i].Contains("WG") || v_MC_samples_legend[i].Contains("ttG") || v_MC_samples_legend[i].Contains("LLJJ")) {continue;}
             else {qw->AddEntry(v_MC_histo[i], v_MC_samples_legend[i], "f");}
 		}
 
@@ -3190,8 +3199,9 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
         if(info_data != "")
         {
             if(use_paperStyle) {text2.DrawLatex(l + 0.04,0.83,info_data);}
-            else {text2.DrawLatex(0.20,0.90,info_data);} //Default: outside frame
+            else {text2.DrawLatex(0.18,0.90,info_data);} //Default: outside frame
         }
+        // cout<<"info_data "<<info_data<<endl;
 
 
 // #    # #####  # ##### ######     ####  #    # ##### #####  #    # #####

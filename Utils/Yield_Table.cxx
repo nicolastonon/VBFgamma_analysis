@@ -82,8 +82,8 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     	{
             // cout<<"v_label[isample] "<<v_label[isample]<<endl; //Debug
 
-            if(v_label[isample].Contains("TTbar") || v_label[isample].Contains("DY")) {continue;} //Consider DD NPL, not MC
-            else if(v_samples[isample] == "DATA") {continue;} //Data appended manually
+            if(v_samples[isample] == "DATA") {continue;} //Data appended manually
+            // if(v_label[isample].Contains("TTbar") || v_label[isample].Contains("DY")) {continue;} //Consider DD NPL, not MC
 
             // cout<<"Pass "<<(isample == v_label.size()-1 || v_label[isample] != v_label[isample+1])<<endl; //Debug
 
@@ -99,8 +99,8 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     	file_latex<<" & "; //Leave leftmost case empty
     	for(int isample=0; isample<v_label.size(); isample++) //Declare all process names
     	{
-            if(v_label[isample].Contains("TTbar") || v_label[isample].Contains("DY")) {continue;}
-            else if(v_samples[isample] == "DATA") {continue;}
+            if(v_samples[isample] == "DATA") {continue;}
+            // if(v_label[isample].Contains("TTbar") || v_label[isample].Contains("DY")) {continue;}
 
             if(isample == v_label.size()-1 || v_label[isample] != v_label[isample+1])
     		{
@@ -268,25 +268,32 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 //--- Cut on region value
                 // if(region != "" && !is_goodCategory) {continue;}
 
-                //FIXME
-                if(region == "HighVPt")
+                bool pass = false;
+                if(region.Contains("HighVPt"))
                 {
-                    float ptCut = 200, fs = 22, mjj=200;
+                    float ptCut = 200, mjj=200;
                     bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                    bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                    bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
-                    if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                    if(!pass) {continue;}
+                    bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                    pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
                 }
-                else if(region == "LowVPt")
+                else if(region.Contains("LowVPt"))
                 {
                     float ptCut = 75, fs = 22, mjj=500;
                     bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > ptCut);
-                    bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                    bool pass = vjj_trig != 2 && lowPtCut && generalCuts;
-                    if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                    if(!pass) {continue;}
+                    bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                    pass = vjj_trig != 2 && lowPtCut && generalCuts;
                 }
+                if(region.Contains("SR"))
+                {
+                    if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                    if(vjj_fs != 22) {continue;}
+                }
+                else if(region.Contains("CR"))
+                {
+                    if(region.Contains("ee") && vjj_fs != 121) {continue;}
+                    else if(region.Contains("mm") && vjj_fs != 169) {continue;}
+                }
+                if(!pass) {continue;}
 
                 // if(isnan(weight*eventMCFactor) || isinf(weight*eventMCFactor))
                 // {
@@ -314,7 +321,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                         statErr_signals+= weight*weight;
                         // cout<<"yield_signals "<<yield_signals<<endl;
                     }
-                    else if(v_samples[isample] != "DATA" && !v_samples[isample].Contains("tZq") && !v_samples[isample].Contains("ttZ") && !v_samples[isample].Contains("tWZ") && !v_samples[isample].Contains("TTbar") && !v_samples[isample].Contains("DY")) //Backgrounds //Don't consider: signals / private samples / MC fakes / ...
+                    else if(v_samples[isample] != "DATA" && v_samples[isample] != signal) //Backgrounds //Don't consider: signals / private samples / MC fakes / ...
                     {
                         yield_bkg+= weight;
                     }
@@ -336,7 +343,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                     file_out<<" (+/- "<<sqrt(statErr_tmp)<<" stat.)"<<endl;
                     // cout<<left<<setw(25)<<v_label[isample]<<yield_tmp<<endl;
 
-                    if(create_latex_table && !v_label[isample].Contains("TTbar") && !v_label[isample].Contains("DY") && !v_label[isample].Contains("DATA") && v_label[isample]!="tZq" && v_label[isample]!="ttZ" && v_label[isample]!="tWZ")
+                    if(create_latex_table && !v_label[isample].Contains("DATA") && v_label[isample] != signal)
                     // if(create_latex_table && !v_label[isample].Contains("TTbar") && !v_label[isample].Contains("DY") && !v_label[isample].Contains("DATA")  && !v_label[isample].Contains("PrivMC"))
                     {
                         file_latex<<fixed<<setprecision(precision)<<abs(yield_tmp)<<" ($\\pm$"<<fixed<<setprecision(precision)<<sqrt(statErr_tmp)<<") & "; //Single process
@@ -458,11 +465,11 @@ int main(int argc, char **argv)
 //== OPTIONS ==
 //--------------------------------------------
     //-- Default args (can be over-riden via command line args)
-    TString signal = "";
+    TString signal = "VBFgamma";
     TString treename = "Events";
 
     //-- Event category: '' <-> all events ; 'xxx' <-> only include events satisfying condition xxx //E.g.: 'is_signal_SR'
-    TString region = "LowVPt"; //'HighVPt' / 'LowVPt'
+    TString region = "CRee_LowVPt"; //'xxx'
 
     TString lumi = "all"; //'2016','2017','2018','Run2,'all''
     TString channel = ""; //'',uuu,uue,eeu,eee
@@ -505,8 +512,8 @@ int main(int argc, char **argv)
         v_samples.push_back("ZGTo2LG"); v_label.push_back("ZGTo2LG");
         v_samples.push_back("WGToLNuG"); v_label.push_back("WGToLNuG");
         v_samples.push_back("QCD"); v_label.push_back("QCD");
-        // v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
-        // v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
+        v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
+        v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
     }
 
 //--------------------------------------------

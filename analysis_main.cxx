@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
     //-- M A I N    A N A L  S I S    O P T I O N S --
     TString signal_process = "VBFgamma";
-    TString region = "LowVPt"; //Select a specific event category : '' (all preselected events) / 'HighVPt' / 'LowVPt'
+    TString region = ""; //Select a specific event category : '' (all preselected events) / ...
     bool use_systematics = false; //true <-> will compute/store systematics selected below
     bool split_JEC = false; //true <-> store all split JEC variations (in addition to total JEC -- much slower!)
     bool is_blind = false; //true <-> don't read/store data events
@@ -147,10 +147,10 @@ int main(int argc, char **argv)
     thesamplelist.push_back("QCD"); thesamplegroups.push_back("QCD");
 
     //DY
-    // thesamplelist.push_back("DYJetsNLO"); thesamplegroups.push_back("DYJetsNLO");
+    thesamplelist.push_back("DYJetsNLO"); thesamplegroups.push_back("DYJetsNLO");
 
     //LLJJ
-    // thesamplelist.push_back("LLJJ"); thesamplegroups.push_back("LLJJ");
+    thesamplelist.push_back("LLJJ"); thesamplegroups.push_back("LLJJ");
 
 //---------------------------------------------------------------------------
 // ########  ########  ########       ##     ##    ###    ########   ######
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 //Variables used in BDT training (and evaluation)
 //For NN, will read necessary input files in logfile, and include them automatically
 
-    std::vector<TString > thevarlist; //FIXME
+    std::vector<TString > thevarlist;
 
     // some inf
     // thevarlist.push_back("vjj_jj_m");
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
     bool create_templates = false; //Create MVA templates
 
 //-----------------    CONTROL HISTOGRAMS
-    bool create_inputVar_histograms = true; //Create histograms of input variables, for plotting
+    bool create_inputVar_histograms = false; //Create histograms of input variables, for plotting
 
 //-----------------    PLOTS
     TString plotChannel = ""; //Can choose to plot particular subchannel //uu, ue, ee, ...
