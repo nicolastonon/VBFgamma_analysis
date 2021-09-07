@@ -68,11 +68,9 @@ CODE EXAMPLE
 
 # Installation and setup
 
-XXX
-
 This standalone Ntuple-analysis code does not require CMSSW, and can be run locally offline.
 
-However, running `Combine` requires a CMSSW environment.
+<!-- However, running `Combine` requires a CMSSW environment. -->
 
 <!--
 :heavy_exclamation_mark: `Potato` and `Combine` are currently supported under CMSSW_10_2_X; however, Tensorflow2 (needed for NN training/evaluation) is only supported under CMSSW_11_1_X; so you may need to use different versions for each !

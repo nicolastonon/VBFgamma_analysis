@@ -949,66 +949,80 @@ bool Get_Variable_Range(TString var, int& nbins, float& xmin, float& xmax)
     //Categories are either 0 or 1 (NB : encoded in Char_t!)
     if(var.BeginsWith("is_") || var.BeginsWith("passed") ) {nbins = 2; xmin = 0; xmax = 2;}
 
-    else if(var == "metEt") {nbins = 20; xmin = 0; xmax = 200;}
-	else if(var == "dEtaFwdJetBJet") {nbins = 20; xmin = 0; xmax = 4;}
-	else if(var == "dEtaFwdJetClosestLep") {nbins = 20; xmin = 0; xmax = 4;}
-	else if(var == "minDRll") {nbins = 15; xmin = 0; xmax = 3.5;}
-    else if(var == "maxEtaJet") {nbins = 10; xmin = 0; xmax = 5;}
-    else if(var == "forwardJetAbsEta") {nbins = 10; xmin = 0; xmax = 5;}
-    else if(var == "jPrimeAbsEta") {nbins = 10; xmin = 0; xmax = 5;}
-	else if(var == "dPhiHighestPtSSPair") {nbins = 20; xmin = 0; xmax = 3.2;}
-	else if(var == "nJetEta1") {nbins = 7; xmin = 0.5; xmax = 7.5;}
-	else if(var == "lepCharge") {nbins = 3; xmin = -1.5; xmax = 1.5;}
-	else if(var == "hardestBjetPt") {nbins = 20; xmin = 20; xmax = 300;}
-    else if(var == "hardestBjetEta") {nbins = 40; xmin = 0; xmax = 2.5;}
-	else if(var == "FwdJetPt") {nbins = 20; xmin = 20; xmax = 200;}
-	else if(var == "inv_mll") {nbins = 20; xmin = 50; xmax = 130;}
-    else if(var == "mHT") {nbins = 10; xmin = 200; xmax = 1200;}
-    else if(var == "top_mass") {nbins = 15; xmin = 100; xmax = 300;}
-    else if(var == "dPhijj_max") {nbins = 10; xmin = 0; xmax = 3;}
-    else if(var == "maxDiJet_M") {nbins = 10; xmin = 100; xmax = 1000;}
-    else if(var == "maxDiJet_Pt") {nbins = 10; xmin = 100; xmax = 400;}
-    else if(var == "maxDijet_dPhi") {nbins = 20; xmin = 0.; xmax = 3.5;}
-    else if(var == "maxDelPhiLL" || var == "recoZ_dPhill") {nbins = 10; xmin = 0; xmax = 3.2;}
-    else if(var == "m3l" || var == "Mass_3l") {nbins = 20; xmin = 50; xmax = 500;}
-    else if(var == "leptonCharge") {nbins = 3; xmin = -1.5; xmax = 1.5;}
-    else if(var == "mTW") {nbins = 20; xmin = 0.; xmax = 150;}
-    else if(var == "recoZ_Mass") {nbins = 20; xmin = 75.; xmax = 110;}
-    else if(var == "lAsymmetry") {nbins = 20; xmin = -2.5; xmax = 2.5;}
-    else if(var == "Mass_tZ" || var == "TopZsystem_M") {nbins = 15; xmin = 200; xmax = 1000;}
-    else if(var.Contains("DeepJet", TString::kIgnoreCase)) {nbins = 15; xmin = 0.3; xmax = 1.;}
-    else if(var == "maxDelRbL") {nbins = 20; xmin = 1.; xmax = 5;}
-    else if(var == "Top_delRbl" || var == "Top_delRbW") {nbins = 20; xmin = 0.; xmax = 4.5;}
-    else if(var == "channel") {nbins = 4; xmin = 0.; xmax = 4;}
-    else if(var == "mbjMax") {nbins = 20; xmin = 0.; xmax = 8.;}
-    else if(var == "recoLepTop_Eta") {nbins = 20; xmin = -3.; xmax = 3.;}
-    else if(var == "recoLepTop_Pt") {nbins = 20; xmin = 0.; xmax = 300.;}
-    else if(var == "dR_blW" || var == "dR_bW") {nbins = 20; xmin = 0.; xmax = 4.;}
-    else if(var == "jprime_Pt") {nbins = 20; xmin = 25.; xmax = 300.;}
-    else if(var == "dR_tZ") {nbins = 10; xmin = 0.; xmax = 5.;}
+    if(var == "vjj_v_pt") {nbins = 20; xmin = 0; xmax = 600;}
+    else if(var == "vjj_v_eta") {nbins = 20; xmin = -2.4; xmax = 2.4;}
+    else if(var == "vjj_v_ystar") {nbins = 20; xmin = -4; xmax = 4;}
 
-    else if(var == "jet1_pt") {nbins = 20; xmin = 25.; xmax = 400.;}
-    else if(var == "jet2_pt") {nbins = 20; xmin = 25.; xmax = 200.;}
-    else if(var == "jet3_pt") {nbins = 20; xmin = 25.; xmax = 120.;}
-    else if(var == "lep1_pt" || var == "lep2_pt" || var == "lep3_pt") {nbins = 20; xmin = 30.; xmax = 230.;}
-    else if(var == "recoZ_Pt") {nbins = 15; xmin = 0.; xmax = 300.;} //300
-    else if(var == "recoZ_Eta") {nbins = 20; xmin = -3.; xmax = 3.;}
-    else if(var.BeginsWith("jet") && var.Contains("eta", TString::kIgnoreCase)) {nbins = 20; xmin = -5.; xmax = 5.;}
+    else if(var == "vjj_lead_pt") {nbins = 20; xmin = 0; xmax = 800;}
+    else if(var == "vjj_lead_eta") {nbins = 20; xmin = -4; xmax = 4;}
+    else if(var == "vjj_lead_m") {nbins = 20; xmin = 0; xmax = 80;}
+
+    else if(var == "vjj_sublead_pt") {nbins = 20; xmin = 0; xmax = 400;}
+    else if(var == "vjj_sublead_eta") {nbins = 20; xmin = -4; xmax = 4;}
+    else if(var == "vjj_sublead_m") {nbins = 20; xmin = 0; xmax = 50;}
+
+    else if(var == "vjj_jj_pt") {nbins = 20; xmin = 0; xmax = 600;}
+    else if(var == "vjj_jj_eta") {nbins = 20; xmin = -4; xmax = 4;}
+    else if(var == "vjj_jj_m") {nbins = 20; xmin = 200; xmax = 1600;}
+    else if(var == "vjj_jj_scalarht") {nbins = 20; xmin = 100; xmax = 1100;}
+    else if(var == "vjj_jj_deta") {nbins = 20; xmin = 0; xmax = 5;}
+    else if(var == "vjj_jj_sumabseta") {nbins = 20; xmin = 0; xmax = 6;}
+
+    else if(var == "vjj_vjj_pt") {nbins = 20; xmin = 0; xmax = 200;}
+    else if(var == "vjj_vjj_eta") {nbins = 20; xmin = -7; xmax = 7;}
+    else if(var == "vjj_vjj_m") {nbins = 20; xmin = 500; xmax = 2500;}
+    else if(var == "vjj_vjj_scalarht") {nbins = 20; xmin = 300; xmax = 1500;}
+    else if(var == "vjj_vjj_sphericity") {nbins = 20; xmin = 0; xmax = 600;}
+    else if(var == "vjj_vjj_aplanarity") {nbins = 20; xmin = 0; xmax = 50;}
+    else if(var == "vjj_vjj_isotropy") {nbins = 20; xmin = 0.2; xmax = 1.;}
+    else if(var == "vjj_vjj_C") {nbins = 20; xmin = 0; xmax = 2000000;}
+    else if(var == "vjj_vjj_D") {nbins = 20; xmin = 0; xmax = 20000000;}
+    else if(var == "vjj_jj_dr2v") {nbins = 20; xmin = 2.; xmax = 5.;}
+
+    else if(var == "vjj_newvaraplanarity") {nbins = 20; xmin = 0; xmax = 0.1;}
+    else if(var == "vjj_newvarC") {nbins = 20; xmin = 0; xmax = 1;}
+    else if(var == "vjj_newvarD") {nbins = 20; xmin = 0; xmax = 0.2;}
+    else if(var == "vjj_newvarjj_vdphi") {nbins = 20; xmin = 2.5; xmax = 4;}
+    else if(var == "vjj_newvarsublead_dphivj") {nbins = 20; xmin = 0; xmax = 6;}
+    else if(var == "vjj_newvarlead_dphivj") {nbins = 20; xmin = 2.; xmax = 5;}
+    else if(var == "vjj_newvarlead_detavj") {nbins = 20; xmin = 0; xmax = 4;}
+    else if(var == "vjj_newvarsublead_detavj") {nbins = 20; xmin = 0; xmax = 4;}
+    else if(var == "vjj_newvarvjj_deta") {nbins = 20; xmin = 0; xmax = 6;}
+    else if(var == "vjj_newvarcircularity") {nbins = 20; xmin = 0; xmax = 1.;}
+    else if(var == "vjj_newvarisotropy") {nbins = 20; xmin = 0.2; xmax = 1.;}
+    else if(var == "vjj_newvarsphericity") {nbins = 20; xmin = 0; xmax = 0.8;}
+
+    else if(var == "vjj_mva_NeginHigh2016BDT") {nbins = 20; xmin = -0.5; xmax = 0.5;}
+    else if(var == "vjj_mva_NeginHigh2017BDT") {nbins = 20; xmin = -0.5; xmax = 0.5;}
+    else if(var == "vjj_mva_NeginHigh2018BDT") {nbins = 20; xmin = -0.5; xmax = 0.5;}
+
+    else if(var == "vjj_njets") {nbins = 8; xmin = 2; xmax = 10;}
+    else if(var == "vjj_nextraj") {nbins = 7; xmin = 0; xmax = 7;}
+    else if(var == "vjj_j_maxAbsEta") {nbins = 20; xmin = 0; xmax = 4.5;}
+    else if(var == "vjj_j_minAbsEta") {nbins = 20; xmin = 0; xmax = 2.5;}
+    else if(var == "vjj_centhtsoft" || var == "vjj_htsoft") {nbins = 20; xmin = 0; xmax = 100;}
 
     else if(var.BeginsWith("cos", TString::kIgnoreCase)) {nbins = 20; xmin = -1.; xmax = 1.;}
     else if(var.Contains("CSV", TString::kIgnoreCase)) {nbins = 20; xmin = 0.; xmax = 1.1;}
     else if(var.Contains("dR") || var.Contains("DelR", TString::kIgnoreCase) ) {nbins = 20; xmin = 0; xmax = 6.;}
     else if(var.Contains("deta", TString::kIgnoreCase) ) {nbins = 15; xmin = 0; xmax = 6.;}
-    else if(var.Contains("dphi", TString::kIgnoreCase) ) {nbins = 20; xmin = 0; xmax = 3.;}
     else if(var.Contains("eta", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
-    else if(var.Contains("phi", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
+    else if(var.Contains("_phi", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
+    else if(var.Contains("_dphi", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
+    else if(var.Contains("_qgl", TString::kIgnoreCase) ) {nbins = 20; xmin = 0.; xmax = 1.;}
+    else if(var.Contains("_dr2v", TString::kIgnoreCase) ) {nbins = 20; xmin = 1.; xmax = 6.;}
+    else if(var.Contains("_isotropy", TString::kIgnoreCase) ) {nbins = 20; xmin = 0.; xmax = 1.;}
+    else if(var.Contains("_circularity", TString::kIgnoreCase) ) {nbins = 20; xmin = 0.; xmax = 1.;}
+    else if(var.Contains("vjj_mva_", TString::kIgnoreCase) ) {nbins = 20; xmin = -1.; xmax = 1.;}
+
+    else if(var.Contains("_is") ) {nbins = 2; xmin = 0.; xmax = 2.;}
 
     else if(var == "njets") {nbins = 8; xmin = 0.; xmax = 8;}
     else if(var == "nbjets") {nbins = 6; xmin = 0.; xmax = 6;}
 
     // else if(var == "Lep3Pt") {nbins = 20; xmin = 0; xmax = 80;}
 
-    else {nbins = 20; xmin = -5.; xmax = 150.;}
+    else {nbins = 20; xmin = -5.; xmax = 300.;}
     // else {return false;}
 
 	return true;

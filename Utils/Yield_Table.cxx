@@ -2,7 +2,7 @@
 
 using namespace std;
 
-//Hardcode nicer latex-compatible category names //Can use '\\mathbf{}' for bold, but does not work with greek letters ?
+//Hardcode nicer latex-compatible region names //Can use '\\mathbf{}' for bold, but does not work with greek letters ?
 //NB: makes use of local definitions from AN/paper
 TString Get_Category_LatexName(TString cat)
 {
@@ -24,9 +24,9 @@ TString Get_Category_LatexName(TString cat)
 //    ##    #### ######## ######## ########        ##    ##     ## ########  ######## ########
 //--------------------------------------------
 
-void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TString category, TString signal, TString lumi, bool group_samples_together, bool remove_totalSF, TString channel, TString treename)
+void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TString region, TString signal, TString lumi, bool group_samples_together, bool remove_totalSF, TString channel, TString treename)
 {
-    bool create_latex_table = true; //true <-> also output latex-format yield tables
+    bool create_latex_table = false; //true <-> also output latex-format yield tables
         bool blind = false; //true <-> don't include DATA in latex tables (but still include in printouts)
         int precision = 1; //Nof decimals displayed after floating point
 
@@ -34,16 +34,16 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
     cout<<endl<<BYEL("                          ")<<endl<<endl;
 	cout<<FYEL("--- Will count the yields for each sample ---")<<endl;
-	cout<<"(category : "<<category<<" / lumi : "<<lumi<<" / channel : "<<channel<<")"<<endl;
+	cout<<"(region : "<<region<<" / lumi : "<<lumi<<" / channel : "<<channel<<")"<<endl;
     cout<<endl<<BYEL("                          ")<<endl<<endl;
 
     mkdir("./outputs/", 0777);
     mkdir("./outputs/yields", 0777);
-    TString outname = "./outputs/yields/Yields_"+category+"_"+lumi;
+    TString outname = "./outputs/yields/Yields_"+region+"_"+lumi;
     if(channel != "") {outname+= "_" + channel;}
     outname+= ".txt";
 
-    TString outname_latex = "./outputs/yields/latex/Yields_"+category+"_"+lumi;
+    TString outname_latex = "./outputs/yields/latex/Yields_"+region+"_"+lumi;
     if(create_latex_table)
     {
         mkdir("./outputs/yields/latex", 0777);
@@ -122,7 +122,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     	file_latex<<"\\\\ \\hline"<<endl;
 
         // file_latex<<" & "; //Leftmost column case empty
-        TString cat_latex_name = Get_Category_LatexName(category); //Leftmost column case = category name
+        TString cat_latex_name = Get_Category_LatexName(region); //Leftmost column case = region name
         file_latex<<cat_latex_name + " & ";
     } //Latex
 
@@ -130,7 +130,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
 //--------------------------------------------
 	ofstream file_out(outname.Data());
-	file_out<<"## Yields  in "<<category<<" category, "<<channel<<" channel ("<<lumi<<") ##"<<endl;
+	file_out<<"## Yields  in "<<region<<" region, "<<channel<<" channel ("<<lumi<<") ##"<<endl;
 	file_out<<"____________________________________________"<<endl;
 	file_out<<"____________________________________________"<<endl;
 
@@ -236,7 +236,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
             t->SetBranchStatus("vjj_sublead_pt", 1); t->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
             t->SetBranchStatus("vjj_trig", 1); t->SetBranchAddress("vjj_trig", &vjj_trig);
 
-            Bool_t vjj_photonIsMatched;
+            Char_t vjj_photonIsMatched;
             if(v_samples[isample] == "QCD" || v_samples[isample] == "ttbar")
             {
                 t->SetBranchStatus("vjj_photonIsMatched", 1); t->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
@@ -265,16 +265,28 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 // if(channel == "eeu" && chan != 2) {continue;}
                 // if(channel == "eee" && chan != 3) {continue;}
 
-                //--- Cut on category value
-                // if(category != "" && !is_goodCategory) {continue;}
+                //--- Cut on region value
+                // if(region != "" && !is_goodCategory) {continue;}
 
                 //FIXME
-                float ptCut = 200, fs = 22, mjj=200;
-                bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
-                if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                if(!pass) {continue;}
+                if(region == "HighVPt")
+                {
+                    float ptCut = 200, fs = 22, mjj=200;
+                    bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                    bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                    bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
+                    if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                    if(!pass) {continue;}
+                }
+                else if(region == "LowVPt")
+                {
+                    float ptCut = 75, fs = 22, mjj=500;
+                    bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > ptCut);
+                    bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                    bool pass = vjj_trig != 2 && lowPtCut && generalCuts;
+                    if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                    if(!pass) {continue;}
+                }
 
                 // if(isnan(weight*eventMCFactor) || isinf(weight*eventMCFactor))
                 // {
@@ -282,6 +294,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 // }
 
                 if(!isData) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;} //FIXME
+                if(weight > 100000) {cout<<"Huge weight "<<weight<<endl; continue;}
 
                 v_yields_proc_allYears[isample]+= weight;
                 v_statErr_proc_allYears[isample]+= weight*weight;
@@ -414,6 +427,16 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
 
 
+
+
+
+
+
+
+
+
+
+
 //--------------------------------------------
 //--------------------------------------------
 //--------------------------------------------
@@ -438,8 +461,8 @@ int main(int argc, char **argv)
     TString signal = "";
     TString treename = "Events";
 
-    //-- Category: '' <-> all events ; 'xxx' <-> only include events satisfying condition xxx //E.g.: 'is_signal_SR'
-    TString category = "SR";
+    //-- Event category: '' <-> all events ; 'xxx' <-> only include events satisfying condition xxx //E.g.: 'is_signal_SR'
+    TString region = "LowVPt"; //'HighVPt' / 'LowVPt'
 
     TString lumi = "all"; //'2016','2017','2018','Run2,'all''
     TString channel = ""; //'',uuu,uue,eeu,eee
@@ -450,9 +473,10 @@ int main(int argc, char **argv)
 //--------------------------------------------
 //--------------------------------------------
 
-    TString region = ""; vector<TString> v_lumis(1); TString dummy;
+    vector<TString> v_lumis(1); TString dummy;
     Apply_CommandArgs_Choices(argc, argv, v_lumis, region, dummy); //Get lumi/region via command line
-    if(region != "") {category = Get_Category_Boolean_Name(region);}
+    // TString region = "";
+    // if(region != "") {region = Get_Category_Boolean_Name(region);}
     if(v_lumis.size() == 3) {lumi = "Run2";}
     else if(v_lumis[0] != "") {lumi = v_lumis[0];}
 
@@ -490,12 +514,12 @@ int main(int argc, char **argv)
 
     if(lumi == "all")
     {
-        Compute_Write_Yields(v_samples, v_label, category, signal, "2016", group_samples_together, remove_totalSF, channel, treename);
-        Compute_Write_Yields(v_samples, v_label, category, signal, "2017", group_samples_together, remove_totalSF, channel, treename);
-        Compute_Write_Yields(v_samples, v_label, category, signal, "2018", group_samples_together, remove_totalSF, channel, treename);
-        Compute_Write_Yields(v_samples, v_label, category, signal, "Run2", group_samples_together, remove_totalSF, channel, treename); //should sum all years
+        Compute_Write_Yields(v_samples, v_label, region, signal, "2016", group_samples_together, remove_totalSF, channel, treename);
+        Compute_Write_Yields(v_samples, v_label, region, signal, "2017", group_samples_together, remove_totalSF, channel, treename);
+        Compute_Write_Yields(v_samples, v_label, region, signal, "2018", group_samples_together, remove_totalSF, channel, treename);
+        Compute_Write_Yields(v_samples, v_label, region, signal, "Run2", group_samples_together, remove_totalSF, channel, treename); //should sum all years
     }
-    else {Compute_Write_Yields(v_samples, v_label, category, signal, lumi, group_samples_together, remove_totalSF, channel, treename);}
+    else {Compute_Write_Yields(v_samples, v_label, region, signal, lumi, group_samples_together, remove_totalSF, channel, treename);}
 
 	return 0;
 }

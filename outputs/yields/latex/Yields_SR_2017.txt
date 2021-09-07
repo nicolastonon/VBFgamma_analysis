@@ -1,10 +1,10 @@
 \begin{sidewaystable}[]
 \centering
 \small
-\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c||c||c|}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c||c||c|}
 \hline
- & VBFgamma & GJets & ttbar2l & ttGJets & LLJJ & DiPhoton & WJetsToLNu & WJetsToQQ & ZGTo2LG & WGToLNuG & QCD & Total SM & Data\\ \hline
-SR & 2363.4 ($\pm$27.3) & 163211.8 ($\pm$875.0) & 27.1 ($\pm$1.1) & 628.7 ($\pm$10.8) & 1.2 ($\pm$0.4) & 2499.8 ($\pm$11.9) & 628.5 ($\pm$45.5) & 702.7 ($\pm$16.9) & 77.4 ($\pm$1.1) & 867.5 ($\pm$50.2) & 100188.1 ($\pm$3305.4) & 271196.1 & 284579.0 \\ \hline
+ & VBFgamma & GJets & ttbar & ttGJets & DiPhoton & WJetsToLNu & WJetsToQQ & ZGTo2LG & WGToLNuG & QCD & Total SM & Data\\ \hline
+SR & 3242.0 ($\pm$64.7) & 163211.8 ($\pm$875.0) & 1.4 ($\pm$0.2) & 628.7 ($\pm$10.8) & 2499.8 ($\pm$11.9) & 628.5 ($\pm$45.5) & 702.7 ($\pm$16.9) & 77.4 ($\pm$1.1) & 867.5 ($\pm$50.2) & 4786.8 ($\pm$868.1) & 176646.5 & 284579.0 \\ \hline
 \end{tabular}
 \caption{Event yields for the 2017 data-taking period.}
 \label{tab:yields}

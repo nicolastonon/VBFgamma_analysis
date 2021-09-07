@@ -1,10 +1,10 @@
 \begin{sidewaystable}[]
 \centering
 \small
-\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c||c||c|}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c||c||c|}
 \hline
- & VBFgamma & GJets & ttbar2l & ttGJets & LLJJ & DiPhoton & WJetsToLNu & WJetsToQQ & ZGTo2LG & WGToLNuG & QCD & Total SM & Data\\ \hline
-SR & 3826.3 ($\pm$50.2) & 423107.2 ($\pm$1520.3) & 67.0 ($\pm$2.6) & 1444.1 ($\pm$26.4) & 2.4 ($\pm$0.8) & 6670.9 ($\pm$36.8) & 1207.1 ($\pm$65.8) & 1327.5 ($\pm$27.2) & 195.8 ($\pm$1.5) & 1537.4 ($\pm$94.5) & 226485.7 ($\pm$6372.4) & 665871.5 & 1334.0 \\ \hline
+ & VBFgamma & GJets & ttbar & ttGJets & DiPhoton & WJetsToLNu & WJetsToQQ & ZGTo2LG & WGToLNuG & QCD & Total SM & Data\\ \hline
+SR & 7001.0 ($\pm$135.6) & 423107.2 ($\pm$1520.3) & 3.2 ($\pm$0.5) & 1444.1 ($\pm$26.4) & 6670.9 ($\pm$36.8) & 1207.1 ($\pm$65.8) & 1327.5 ($\pm$27.2) & 195.8 ($\pm$1.5) & 1537.4 ($\pm$94.5) & 14593.9 ($\pm$2247.3) & 457088.1 & 1334.0 \\ \hline
 \end{tabular}
 \caption{Event yields for the 2018 data-taking period.}
 \label{tab:yields}

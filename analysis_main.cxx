@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
     //-- M A I N    A N A L  S I S    O P T I O N S --
     TString signal_process = "VBFgamma";
-    TString region = ""; //Select a specific event category : '' (all preselected events) / 'tZq' / 'ttZ' / 'signal'
+    TString region = "LowVPt"; //Select a specific event category : '' (all preselected events) / 'HighVPt' / 'LowVPt'
     bool use_systematics = false; //true <-> will compute/store systematics selected below
     bool split_JEC = false; //true <-> store all split JEC variations (in addition to total JEC -- much slower!)
     bool is_blind = false; //true <-> don't read/store data events
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     //Signal
     thesamplelist.push_back("VBFgamma"); thesamplegroups.push_back("VBFgamma");
 
-    //GJets
+    //GJets (QCD)
     thesamplelist.push_back("GJets"); thesamplegroups.push_back("GJets");
 
     //TTbar
@@ -207,10 +207,10 @@ int main(int argc, char **argv)
 
     vector<TString> set_v_add_var_names;
 
+    set_v_add_var_names.push_back("vjj_njets");
     set_v_add_var_names.push_back("vjj_v_pt");
     set_v_add_var_names.push_back("vjj_v_eta");
     set_v_add_var_names.push_back("vjj_v_phi");
-    set_v_add_var_names.push_back("vjj_v_m");
     set_v_add_var_names.push_back("vjj_v_ystar");
     set_v_add_var_names.push_back("vjj_jj_pt");
     set_v_add_var_names.push_back("vjj_jj_eta");
@@ -228,6 +228,35 @@ int main(int argc, char **argv)
     set_v_add_var_names.push_back("vjj_vjj_D");
     set_v_add_var_names.push_back("vjj_htsoft");
     set_v_add_var_names.push_back("vjj_centhtsoft");
+
+    if(region == "HighVPt")
+    {
+        set_v_add_var_names.push_back("vjj_mva_NeginHigh2016BDT");
+        set_v_add_var_names.push_back("vjj_mva_NeginHigh2017BDT");
+        set_v_add_var_names.push_back("vjj_mva_NeginHigh2018BDT");
+    }
+    else if(region == "LowVPt")
+    {
+        set_v_add_var_names.push_back("vjj_mva_NeginLow2016BDT");
+        set_v_add_var_names.push_back("vjj_mva_NeginLow2017BDT");
+        set_v_add_var_names.push_back("vjj_mva_NeginLow2018BDT");
+    }
+
+    set_v_add_var_names.push_back("vjj_lead_pt");
+    set_v_add_var_names.push_back("vjj_lead_eta");
+    set_v_add_var_names.push_back("vjj_lead_m");
+    set_v_add_var_names.push_back("vjj_sublead_pt");
+    set_v_add_var_names.push_back("vjj_sublead_eta");
+    set_v_add_var_names.push_back("vjj_sublead_m");
+    set_v_add_var_names.push_back("vjj_j_maxAbsEta");
+    set_v_add_var_names.push_back("vjj_j_minAbsEta");
+    set_v_add_var_names.push_back("vjj_jj_sumabseta");
+    set_v_add_var_names.push_back("vjj_vjj_pt");
+    set_v_add_var_names.push_back("vjj_vjj_eta");
+    set_v_add_var_names.push_back("vjj_vjj_m");
+    set_v_add_var_names.push_back("vjj_vjj_scalarht");
+    set_v_add_var_names.push_back("vjj_vjj_sphericity");
+    set_v_add_var_names.push_back("vjj_vjj_aplanarity");
 
 
 //---------------------------------------------------------------------------
@@ -316,7 +345,7 @@ int main(int argc, char **argv)
     bool create_templates = false; //Create MVA templates
 
 //-----------------    CONTROL HISTOGRAMS
-    bool create_inputVar_histograms = false; //Create histograms of input variables, for plotting
+    bool create_inputVar_histograms = true; //Create histograms of input variables, for plotting
 
 //-----------------    PLOTS
     TString plotChannel = ""; //Can choose to plot particular subchannel //uu, ue, ee, ...
@@ -325,7 +354,7 @@ int main(int argc, char **argv)
         bool prefit = true; //true <-> plot prefit templates ; else postfit (requires combine output file)
         bool use_combine_file = false; //true <-> use MLF output file from Combine (can get postfit plots, total error, etc.)
 
-    bool draw_input_vars = false; //Plot input variables
+    bool draw_input_vars = true; //Plot input variables
         bool draw_input_allChannels = false; //true <-> also draw for eachs split channel
 
 //-----------------    OTHER

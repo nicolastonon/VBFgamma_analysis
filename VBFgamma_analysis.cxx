@@ -54,6 +54,9 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
 
 	this->region = region;
 
+    //FIXME
+    if(region != "HighVPt" && region != "LowVPt") {cout<<BOLD(FRED("Wrong region "<<region<<" ! Abort !"))<<endl; this->stop_program = true;}
+
     this->use_paperStyle = use_paperStyle;
 
     this->signal_process = signal_process;
@@ -173,7 +176,7 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
     }
 
 	//-- Get colors
-    int color_scheme = 0; //Check color scheme definitions directly in Get_Samples_Colors() //FIXME
+    int color_scheme = 0; //Check color scheme definitions directly in Get_Samples_Colors()
 	color_list.resize(sample_list.size());
 	Get_Samples_Colors(color_list, v_custom_colors, sample_list, sample_groups, color_scheme); //Read hard-coded sample colors
 
@@ -829,7 +832,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     if(makeHisto_inputVars) {classifier_name = "";} //For naming conventions
 
     //-- Define category of interest
-    TString cat_tmp = region;
+    // TString cat_tmp = region;
 
     //-- Hard-coded: determine whether we are producing EFT templates using a 'predefined strategy' (cf. definitions in main --> different strategies to apply automatic cuts)
     bool use_maxNode_events = false;
@@ -1094,14 +1097,16 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
                 //-- Always keep track of these vars (needed for different templates, syst, etc.)
                 float* channel = new float;
+                UInt_t* njets = new UInt_t;
                 // tree->SetBranchStatus("channel", 1); tree->SetBranchAddress("channel", channel);
+                tree->SetBranchStatus("vjj_njets", 1); tree->SetBranchAddress("vjj_njets", njets);
 
                 if(makeHisto_inputVars)
     			{
     				for(int i=0; i<total_var_list.size(); i++)
     				{
+                        if(total_var_list[i] == "vjj_njets") {/*total_var_pfloats[i] = (float*) njets;*/ continue;}
                         // if(total_var_list[i] == "mTW") {total_var_pfloats[i] = mTW; continue;}
-                        // if(total_var_list[i] == "njets") {total_var_pfloats[i] = njets; continue;}
                         // if(total_var_list[i] == "channel") {total_var_pfloats[i] = channel; continue;}
 
                         tree->SetBranchStatus(total_var_list[i], 1);
@@ -1117,8 +1122,8 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         {
                             if(!isample) {cout<<DIM("MVA 1 -- "<<i<<" -- Activate variable '"<<var_list[i]<<"'")<<endl;}
 
+                            if(var_list[i] == "vjj_njets") {/*var_list_pfloats[i] = (float*) njets;*/ continue;}
                             // if(var_list[i] == "mTW") {var_list_pfloats[i] = mTW; continue;}
-                            // if(var_list[i] == "njets") {var_list_pfloats[i] = njets; continue;}
                             // if(var_list[i] == "channel") {var_list_pfloats[i] = channel; continue;}
 
                             // cout<<"Activate branch "<<var_list[i]<<"("<<var_list_pfloats[i]<<")"<<endl;
@@ -1144,6 +1149,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     				}
     			}
 
+                /*
     			//--- Cut on relevant event selection stored as flag (Char_t)
                 //NB: don't 'call' the flag directly, use function Get_Category_Boolean_Name() instead (need different flags for NPL samples)
     			Char_t is_goodCategory = true; //Cut on event category flag
@@ -1165,8 +1171,10 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         // cout<<"Will apply cut on flag ["<<cat_name<<"] !"<<endl;
                     }
                 }
+                */
 
-                //--- Event weights //FIXME
+                //--- //FIXME
+                //--- Event weights
                 Int_t vjj_nlumiWeights = 113;
                 Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
                 if(!isData)
@@ -1179,19 +1187,19 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
                 Bool_t vjj_isGood;
                 Int_t vjj_fs, vjj_trig;
-                Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
-                tree->SetBranchStatus("vjj_v_eta", 1); tree->SetBranchAddress("vjj_v_eta", &vjj_v_eta);
-                tree->SetBranchStatus("vjj_jj_deta", 1); tree->SetBranchAddress("vjj_jj_deta", &vjj_jj_deta);
-                tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
-                tree->SetBranchStatus("vjj_v_pt", 1); tree->SetBranchAddress("vjj_v_pt", &vjj_v_pt);
+                // Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
+                tree->SetBranchStatus("vjj_trig", 1); tree->SetBranchAddress("vjj_trig", &vjj_trig);
                 tree->SetBranchStatus("vjj_isGood", 1); tree->SetBranchAddress("vjj_isGood", &vjj_isGood);
                 tree->SetBranchStatus("vjj_fs", 1); tree->SetBranchAddress("vjj_fs", &vjj_fs);
-                tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
-                tree->SetBranchStatus("vjj_lead_pt", 1); tree->SetBranchAddress("vjj_lead_pt", &vjj_lead_pt);
-                tree->SetBranchStatus("vjj_sublead_pt", 1); tree->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
-                tree->SetBranchStatus("vjj_trig", 1); tree->SetBranchAddress("vjj_trig", &vjj_trig);
+                // tree->SetBranchStatus("vjj_v_eta", 1); tree->SetBranchAddress("vjj_v_eta", &vjj_v_eta);
+                // tree->SetBranchStatus("vjj_jj_deta", 1); tree->SetBranchAddress("vjj_jj_deta", &vjj_jj_deta);
+                // tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
+                // tree->SetBranchStatus("vjj_v_pt", 1); tree->SetBranchAddress("vjj_v_pt", &vjj_v_pt);
+                // tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
+                // tree->SetBranchStatus("vjj_lead_pt", 1); tree->SetBranchAddress("vjj_lead_pt", &vjj_lead_pt);
+                // tree->SetBranchStatus("vjj_sublead_pt", 1); tree->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
 
-                Bool_t vjj_photonIsMatched;
+                Char_t vjj_photonIsMatched;
                 if(sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
                 {
                     tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
@@ -1302,7 +1310,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     			for(int ientry=0; ientry<nentries; ientry++)
     			{
     				// cout<<FGRN("ientry "<<ientry<<"")<<endl;
-                    if(ientry%50000==0) {cout<<DIM("Entry "<<ientry<<"")<<endl;} //Very slow, print progress
+                    if(ientry%100000==0) {cout<<DIM("Entry "<<ientry<<"")<<endl;} //Very slow, print progress
 
                     // std::fill(var_list_floats.begin(), var_list_floats.end(), 0); //Reset vectors reading inputs to 0
 
@@ -1313,17 +1321,49 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     				// 	cout<<BOLD(FRED("* Found event with eventWeight*eventMCFactor = "<<eventWeight*eventMCFactor<<" ; remove it..."))<<endl; continue;
     				// }
 
-//---- APPLY EVENT CUTS HERE ------------------------- //FIXME
+                    //-- Debug printouts
+                    // for(int ivar=0; ivar<total_var_list.size(); ivar++)
+                    // {
+                    //     cout<<total_var_list[ivar]<<" --> "<<*total_var_pfloats[ivar]<<endl;
+                    // }
 
-                    float ptCut = 200, fs = 22, mjj=200;
-                    bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                    bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                    bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
-                    if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                    if(!pass) {continue;}
+//---- APPLY EVENT CUTS HERE -------------------------
+
+                    //FIXME
+                    Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
+                    for(int ivar=0; ivar<total_var_list.size(); ivar++)
+                    {
+                        if(total_var_list[ivar] == "vjj_v_eta") {vjj_v_eta = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_jj_deta") {vjj_jj_deta = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_jj_m") {vjj_jj_m = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_v_pt") {vjj_v_pt = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_jj_m") {vjj_jj_m = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_lead_pt") {vjj_lead_pt = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_sublead_pt") {vjj_sublead_pt = *total_var_pfloats[ivar];}
+                        else if(total_var_list[ivar] == "vjj_njets") {*total_var_pfloats[ivar] = (float) *njets;}
+                    }
+
+                    if(region == "HighVPt")
+                    {
+                        float ptCut = 200, fs = 22, mjj=200;
+                        bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                        bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                        bool pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
+                        if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                        if(!pass) {continue;}
+                    }
+                    else if(region == "LowVPt")
+                    {
+                        float ptCut = 75, fs = 22, mjj=500;
+                        bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > ptCut);
+                        bool generalCuts = ((vjj_isGood) && (vjj_fs==fs) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
+                        bool pass = vjj_trig != 2 && lowPtCut && generalCuts;
+                        if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
+                        if(!pass) {continue;}
+                    }
 
                     //--- Cut on category flag
-                    if(!is_goodCategory) {continue;}
+                    // if(!is_goodCategory) {continue;}
                     // if(std::accumulate(v_is_goodCategory.begin(), v_is_goodCategory.end(), 0) != 1) {continue;} //Check whether at least 1 cat. flag is true
 
     				bool pass_all_cuts = true;
@@ -1367,8 +1407,10 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         }
                     } //Templates
 
+                    //FIXME
                     double weight_tmp = 1.;
                     if(!isData) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;} //FIXME
+                    if(weight_tmp > 100000) {cout<<BOLD(FRED("Huge weight "<<weight_tmp<<""))<<endl; continue;}
 
                     // double weight_tmp = eventWeight * eventMCFactor; //Fill histo with this weight ; manipulate differently depending on syst
                     // cout<<"eventWeight "<<eventWeight<<" / eventMCFactor "<<eventMCFactor<<" / weight_tmp "<<weight_tmp<<endl;
@@ -1389,7 +1431,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                             //-- TEMPLATES
                             if(!makeHisto_inputVars)
                             {
-                                *total_var_pfloats[ivar] = *total_var_pfloats[0]; //Force use of first variable //FIXME
+                                *total_var_pfloats[ivar] = *total_var_pfloats[0]; //Force use of first variable
                             }
                             // cout<<total_var_list[ivar]<<" = "<<*total_var_pfloats[ivar]<<endl; //Debug printout
 
@@ -1540,7 +1582,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
     			// cout<<"Done with "<<sample_list[isample]<<" sample"<<endl;
 
-                // if(njets) {delete njets; njets = NULL;}
+                if(njets) {delete njets; njets = NULL;}
                 // if(channel) {delete channel; channel = NULL;}
                 // if(mTW) {delete mTW; mTW = NULL;} //Careful not to delete twice, can cause nasty segfaults
 
@@ -1603,7 +1645,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     if(clfy1) {delete clfy1; clfy1 = NULL;}
     for(int ivar=0; ivar<var_list_pfloats.size(); ivar++) //Delete input vars
     {
-        if(var_list_pfloats[ivar] && var_list[ivar] != "mTW" && var_list[ivar] != "njets" && var_list[ivar] != "channel") //Exception: mTW/njets/... are sepcial variables already deleted above //Ideally, use smart pointers (auto-delete shared mem, only once)
+        if(var_list[ivar] != "njets" && var_list[ivar] != "channel") //Exception: special variables already deleted above //Ideally, use smart pointers (auto-delete shared mem, only once)
         {
             // cout<<"del var "<<var_list[ivar]<<" = "<<var_list_pfloats[ivar]<<endl;
             delete var_list_pfloats[ivar]; var_list_pfloats[ivar] = NULL;
@@ -1611,7 +1653,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     }
     for(int ivar=0; ivar<var_list_pfloats_2.size(); ivar++)
     {
-        if(var_list_pfloats_2[ivar] && v_varIndices_inMVA1[ivar]==-1 && var_list_NN2[ivar] != "mTW" && var_list_NN2[ivar] != "njets" && var_list_NN2[ivar] != "channel") //Be careful not to delete any previously-deleted variable ! //Ideally, use smart pointers (auto-delete shared mem, only once)
+        if(var_list_pfloats_2[ivar] && v_varIndices_inMVA1[ivar]==-1 && var_list_NN2[ivar] != "njets" && var_list_NN2[ivar] != "channel") //Be careful not to delete any previously-deleted variable ! //Ideally, use smart pointers (auto-delete shared mem, only once)
         {
             /*cout<<"del var "<<var_list_NN2[ivar]<<endl;*/
             delete var_list_pfloats_2[ivar]; var_list_pfloats_2[ivar] = NULL;
@@ -1753,6 +1795,7 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 		if(drawInputVars && !prefit) {cout<<"Error ! Can not draw postfit input vars yet !"<<endl; return;}
 	}
 
+    if(use_combine_file) {cout<<"ERROR: option 'use_combine_file' not working yet ! "<<endl; return;}
 
 //  ####  ###### ##### #    # #####
 // #      #        #   #    # #    #
@@ -2812,7 +2855,7 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
         histo_ratio_data->GetXaxis()->SetTitleSize(0.05);
 
         //FIXME
-        TGaxis::SetExponentOffset(-0.08, 0., "y");
+        TGaxis::SetExponentOffset(-0.07, 0.01, "y");
 
         //-- If a point is outside the y-range of the ratio pad defined by SetMaximum/SetMinimum(), it disappears with its error
         //-- Trick: fill 2 histos with points either above/below y-range, to plot some markers indicating missing points (cleaner)
@@ -3223,8 +3266,8 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 	file_input->Close();
 
     //-- Activate this function to printout yields in each subregion //NB: only works with my own template files (not those from combine)
-    vector<TString> vregions;
-    vregions.push_back("xxx");
+    // vector<TString> vregions;
+    // vregions.push_back("xxx");
     // Print_Yields_fromHistograms(inputFile_path, template_name, v_lumiYears, vregions, sample_list);
 
     //-- Debug printouts

@@ -1,10 +1,10 @@
 \begin{sidewaystable}[]
 \centering
 \small
-\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c||c||c|}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c||c||c|}
 \hline
- & VBFgamma & GJets & ttbar2l & ttGJets & LLJJ & DiPhoton & WJetsToLNu & WJetsToQQ & ZGTo2LG & WGToLNuG & QCD & Total SM & Data\\ \hline
-SR & 8505.6 ($\pm$63.0) & 1172151.5 ($\pm$5117.0) & 130.3 ($\pm$3.2) & 2436.2 ($\pm$29.2) & 3.9 ($\pm$0.9) & 10341.6 ($\pm$39.5) & 2233.7 ($\pm$86.8) & 2504.3 ($\pm$35.1) & 374.8 ($\pm$2.5) & 3277.3 ($\pm$116.3) & 394405.0 ($\pm$7437.8) & 1596363.9 & 584060.0 \\ \hline
+ & VBFgamma & GJets & ttbar & ttGJets & DiPhoton & WJetsToLNu & WJetsToQQ & ZGTo2LG & WGToLNuG & QCD & Total SM & Data\\ \hline
+SR & 13216.7 ($\pm$160.8) & 855923.6 ($\pm$5047.7) & 5.9 ($\pm$0.7) & 2436.2 ($\pm$29.2) & 10341.6 ($\pm$39.5) & 2233.7 ($\pm$86.8) & 2504.3 ($\pm$35.1) & 374.8 ($\pm$2.5) & 3277.3 ($\pm$116.3) & 22957.9 ($\pm$2454.1) & 913271.9 & 584060.0 \\ \hline
 \end{tabular}
 \caption{Event yields for the Run2 data-taking period.}
 \label{tab:yields}
