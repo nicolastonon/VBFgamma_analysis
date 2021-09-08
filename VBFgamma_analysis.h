@@ -146,7 +146,6 @@ class VBFgamma_analysis
 	TString signal_process;
     TString dir_ntuples; //Path to base dir. containing Ntuples
     TString dir_ntuples_SR; //Path to dir. containing split Ntuples containing only SR events
-    bool use_optimized_ntuples; //Set automatically in the constructor; true <-> special case: adapt code (+ class members) to deal with 'optimized' ntuples rather than the full list of ntuples (must have been produced beforehand with [Split_AllNtuples_ByCategory] code)
     TString plot_extension;
     vector<TString> v_lumiYears;
     TString lumiName;

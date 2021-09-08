@@ -116,36 +116,6 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
     dir_ntuples = NTUPLEDIR; //Defined in Utils/Helper
     TString dir_ntuples_tmp = dir_ntuples;
 
-    this->use_optimized_ntuples = false; //Obsolete
-    /* //Obsolete
-    dir_ntuples_SR = dir_ntuples + "SR/";
-    if(region=="tZq" || region=="ttZ" || region=="signal") {dir_ntuples = dir_ntuples_SR; cout<<endl<<FMAG("NB: will use SR sub-samples ! Make sure they are up-to-date !")<<endl<<endl;}
-    if(dir_ntuples == dir_ntuples_SR && !Check_File_Existence((dir_ntuples_SR + v_lumiYears[0] + "/DATA.root")))
-    {
-        cout<<endl<<FMAG("Warning : SR sub-sample (produced with code input_ntuples/Split_FullSamples) "<<(dir_ntuples_SR + v_lumiYears[0] + "/DATA.root")<<" not found ! Assuming that split ntuples are not available --> Will use full ntuples ! (slower)")<<endl<<endl;
-        dir_ntuples = NTUPLEDIR;
-    }
-    // cout<<"dir_ntuples : "<<dir_ntuples<<endl;
-
-    //-- To considerably speed-up the usual AN workflow, use [Split_AllNtuples_ByCategory] code to 1) split full ntuples by sub-categories, 2) merge all samples which belong to same sample groups
-    //---> if found, will only use these 'optimized' ntuples <-> update the member lists accordingly
-    if(dir_ntuples == dir_ntuples_SR && Check_File_Existence((dir_ntuples_SR + v_lumiYears[0] + "/NPL.root")) ) //Hard-coded check: if 'xx/SR/xx/NPL.root' sample is present, it must mean that we have split the ntuples by categ. and merged them by groups (here: NPL group)
-    {
-        this->use_optimized_ntuples = true;
-        cout<<BOLD(FMAG("=== Optimized sub-ntuples found ! Will use ntuples split by categories & merged by groups (++ performance) ==="))<<endl;
-        cout<<DIM("--> Set sample_list = sample_groups")<<endl<<endl;
-
-        //Update member lists
-        sample_list.clear();
-        for(int igroup=0; igroup<sample_groups.size(); igroup++)
-        {
-            if(igroup > 0 && sample_groups[igroup]==sample_groups[igroup-1]) {continue;} //Group already considered --> Skip
-            sample_list.push_back(sample_groups[igroup]); //Add sample group
-        }
-        sample_groups = sample_list;
-    }
-    */
-
     this->process_samples_byGroup = process_samples_byGroup;
     if(this->process_samples_byGroup) //Run on group ntuples to reduce the number of files to read
     {
@@ -570,7 +540,6 @@ void VBFgamma_analysis::Train_BDT(TString channel)
             TString samplename_tmp = sample_list[isample];
 
             TString mycut_string_tmp = mycut.GetTitle();
-            if(samplename_tmp.Contains("NPL", TString::kIgnoreCase) || samplename_tmp.Contains("DY", TString::kIgnoreCase) || samplename_tmp.Contains("ttbar", TString::kIgnoreCase)) {mycut_string_tmp = mycut_string_tmp.ReplaceAll("_SR", "_SRFake"); mycut_string_tmp = mycut_string_tmp.ReplaceAll("_CR", "_CRFake");} //Modify flag for NPL samples only
             TCut mycut_tmp = mycut_string_tmp.Data();
 
             //-- Protections
@@ -1034,8 +1003,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
             cout<<endl<<endl<<UNDL(FBLU("Sample : "<<sample_list[isample]<<""))<<endl;
             cout<<DIM("(path: "<<inputfile<<")")<<endl;
 
-            bool isFake = false; //Identify NPL samples (different flags)
-            if(sample_list[isample].Contains("NPL", TString::kIgnoreCase) || sample_list[isample].Contains("DY", TString::kIgnoreCase) || sample_list[isample].Contains("ttbar", TString::kIgnoreCase)) {isFake = true;}
             bool isData = false;
             if(sample_list[isample] == "DATA") {isData = true;}
 
@@ -1063,7 +1030,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     		//NB : only nominal TTree contains systematic weights ; others only contain the nominal weight (but variables have different values)
             for(int itree=0; itree<systTree_list.size(); itree++)
     		{
-                if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && (sample_list[isample] == "DATA" || sample_list[isample] == "DY" || sample_list[isample].Contains("NPL") || sample_list[isample].Contains("TTbar") ) ) {continue;} //Special cases for which only nominal tree must be considered
+                if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && sample_list[isample] == "DATA") {continue;} //Special cases for which only nominal tree must be considered
 
                 TString treename_tmp = systTree_list[itree];
     			if(treename_tmp == "") {treename_tmp = nominal_tree_name;}
@@ -1140,8 +1107,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     				tree->SetBranchStatus(v_cut_name[i], 1);
                     if(v_cut_name[i].BeginsWith("is") || v_cut_name[i].BeginsWith("passed") ) //Categories are encoded into Char_t, not float
     				{
-                        if(!isFake) {tree->SetBranchAddress(v_cut_name[i], &v_cut_char[i]);}
-                        else {tree->SetBranchStatus(v_cut_name[i]+"Fake", 1); tree->SetBranchAddress(v_cut_name[i]+"Fake", &v_cut_char[i]);} //Fake <-> separate flag
+                        tree->SetBranchAddress(v_cut_name[i], &v_cut_char[i]);
     				}
     				else //All others are floats
     				{
@@ -1174,8 +1140,12 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                 */
 
                 //--- //FIXME
-                //--- Event weights
-                Int_t vjj_nlumiWeights = 113;
+                //--- Event weight variables
+                Int_t vjj_nlumiWeights = 113; //Default value
+                tree->SetBranchStatus("vjj_nlumiWeights", 1); tree->SetBranchAddress("vjj_nlumiWeights", &vjj_nlumiWeights);
+                tree->GetEntry(0); //Read first entry to get 'vjj_nlumiWeights' value
+                // tree->ResetBranchAddresses(); //Reset this branch
+                tree->SetBranchStatus("vjj_nlumiWeights", 0); //Not needed anymore
                 Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
                 if(!isData)
                 {
@@ -1185,12 +1155,18 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                     tree->SetBranchStatus("vjj_mu_effWgt", 1); tree->SetBranchAddress("vjj_mu_effWgt", &vjj_mu_effWgt);
                 }
 
+                //-- Event selection variables
                 Bool_t vjj_isGood;
                 Int_t vjj_fs, vjj_trig;
-                // Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
+                Char_t vjj_photonIsMatched;
                 tree->SetBranchStatus("vjj_trig", 1); tree->SetBranchAddress("vjj_trig", &vjj_trig);
                 tree->SetBranchStatus("vjj_isGood", 1); tree->SetBranchAddress("vjj_isGood", &vjj_isGood);
                 tree->SetBranchStatus("vjj_fs", 1); tree->SetBranchAddress("vjj_fs", &vjj_fs);
+                if(region.Contains("SR") && sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
+                {
+                    tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
+                }
+                // Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
                 // tree->SetBranchStatus("vjj_v_eta", 1); tree->SetBranchAddress("vjj_v_eta", &vjj_v_eta);
                 // tree->SetBranchStatus("vjj_jj_deta", 1); tree->SetBranchAddress("vjj_jj_deta", &vjj_jj_deta);
                 // tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
@@ -1199,12 +1175,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                 // tree->SetBranchStatus("vjj_lead_pt", 1); tree->SetBranchAddress("vjj_lead_pt", &vjj_lead_pt);
                 // tree->SetBranchStatus("vjj_sublead_pt", 1); tree->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
 
-                Char_t vjj_photonIsMatched;
-                if(region.Contains("SR") && sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
-                {
-                    tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
-                }
-
                 //-- Reserve 1 float for each systematic weight (also for nominal to keep ordering, but not used)
     			vector<Double_t*> v_double_systWeights(syst_list.size(), NULL);
     			for(int isyst=0; isyst<syst_list.size(); isyst++)
@@ -1212,7 +1182,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     				//-- Protections : not all syst weights apply to all samples, etc.
     				if(sample_list[isample] == "DATA") {break;}
     				else if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name) {break;} //Syst event weights only stored in nominal TTree
-                    else if((sample_list[isample].Contains("NPL") && syst_list[isyst] != "" && !syst_list[isyst].BeginsWith("FR")) || (!sample_list[isample].Contains("NPL") && syst_list[isyst].BeginsWith("FR"))) {continue;} //NPL <-> only fakes sytematics; all others <-> no fakes systematics
                     else if(v_lumiYears[iyear] == "2018" && syst_list[isyst].BeginsWith("prefir") ) {continue;} //no prefire in 2018
 
                     //Set proper branch address (hard-coded mapping)
@@ -1450,7 +1419,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                                 if((sample_list[isample] == "DATA") && syst_list[isyst] != "") {break;}
                                 else if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && syst_list[isyst] != "") {break;} //Syst event weights only stored in nominal TTree
                                 else if(v_lumiYears[iyear] == "2018" && syst_list[isyst].BeginsWith("prefir") ) {continue;} //no prefire in 2018
-                                else if((sample_list[isample].Contains("NPL") && syst_list[isyst] != "" && !syst_list[isyst].BeginsWith("FR")) || (!sample_list[isample].Contains("NPL") && syst_list[isyst].BeginsWith("FR"))) {continue;} //NPL <-> only fakes sytematics; all others <-> no fakes systematics
 
         						// cout<<"-- sample "<<sample_list[isample]<<" / channel "<<channel_list[ichan]<<" / syst "<<syst_list[isyst]<<endl;
 
@@ -1508,7 +1476,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         if(sample_list[isample] == "DATA" && syst_list[isyst] != "") {break;}
                         else if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && syst_list[isyst] != "") {break;} //Syst event weights only stored in nominal TTree
                         else if(v_lumiYears[iyear] == "2018" && syst_list[isyst].BeginsWith("prefir") ) {continue;} //no prefire in 2018
-                        else if((sample_list[isample].Contains("NPL") && syst_list[isyst] != "" && !syst_list[isyst].BeginsWith("FR")) || (!sample_list[isample].Contains("NPL") && syst_list[isyst].BeginsWith("FR"))) {continue;} //NPL <-> only fakes sytematics; all others <-> no fakes systematics
 
     					for(int ivar=0; ivar<total_var_list.size(); ivar++)
     					{
@@ -1526,7 +1493,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
     						file_output->cd();
 
-                            if(sample_list[isample] != "NPL_MC" && sample_list[isample] != "DATA") //NB: NPL_MC *should* have negative bins (substraction); and allow empty data
+                            if(sample_list[isample] != "DATA") //Allow empty data
                             {
                                 //-- Nominal: prevent negative bins, and error>content
                                 if(syst_list[isyst] == "" && systTree_list[itree] == "")
@@ -1707,7 +1674,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 // #    # ###### #    #  ####  ######
 
     //-- For COMBINE fit, want to directly merge contributions from different processes into single histograms
-    //-- For control histograms, only need to substract MC NPL from data-driven NPL
     if(!this->process_samples_byGroup) {MergeSplit_Templates(makeHisto_inputVars, output_file_name, total_var_list, template_name, region, true);} //If already considering group ntuples, no need to group anything more
 
 	return;
@@ -2035,9 +2001,6 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 
     				//-- Protections, special cases
     				if(sample_list[isample] == "DATA") {v_isSkippedSample[isample] = true; nof_skipped_samples++; continue;}
-                    else if(sample_list[isample] == "tZq" || sample_list[isample] == "ttZ" || sample_list[isample] == "tWZ") {v_isSkippedSample[isample] = true; nof_skipped_samples++; continue;} //Default: only stack private samples (at SM point), not central samples
-                    else if(sample_list[isample] == "NPL_DATA")  {samplename = "NPL";} //Instead of 'NPL_DATA' and 'NPL_MC', we only want to read the merged histo 'NPL'
-                    else if(sample_list[isample] == "NPL_MC")  {v_isSkippedSample[isample] = true; nof_skipped_samples++; continue;} //NPL_MC gets substracted from NPL histograms and deleted --> Ignore this vector element //Remove ?
 
                     //-- Add sample name to list (used for legend) //NB: add even if histo was not found and skipped, because expect that it will be found for some other year/channel/... But if not found at all, legend will be wrong
                     if(iyear==0 && samplename != "DATA")
@@ -2166,7 +2129,7 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
     					{
     						for(int itree=0; itree<systTree_list.size(); itree++)
     						{
-                                if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && (sample_list[isample] == "DATA" || sample_list[isample] == "DY" || sample_list[isample].Contains("NPL") || sample_list[isample].Contains("TTbar")) ) {continue;}
+                                if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && (sample_list[isample] == "DATA") ) {continue;}
 
     							for(int isyst=0; isyst<syst_list.size(); isyst++)
     							{
@@ -2472,7 +2435,6 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
     	int index_tZq_sample = -9;
         int index_ttZ_sample = -9;
         int index_tWZ_sample = -9;
-    	int index_NPL_sample = -9;
 
     	// cout<<"v_MC_histo.size() "<<v_MC_histo.size()<<endl;
     	// cout<<"v_MC_samples_legend.size() "<<v_MC_samples_legend.size()<<endl;
@@ -3562,9 +3524,6 @@ void VBFgamma_analysis::MergeSplit_Templates(bool makeHisto_inputVars, TString f
         				{
                         	//-- Protections : not all syst weights apply to all samples, etc.
                             if(sample_list[isample] == "DATA" && ((systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name) || syst_list[isyst] != "")) {continue;} //nominal data only
-                            else if(makeHisto_inputVars && sample_groups[isample] != "NPL") {continue;} //For control plots, only need to substract prompt NPL from data-driven NPL
-                            else if((sample_list[isample].Contains("NPL") && syst_list[isyst] != "" && !syst_list[isyst].BeginsWith("FR")) || (!sample_list[isample].Contains("NPL") && syst_list[isyst].BeginsWith("FR"))) {continue;} //NPL <-> only fakes sytematics; all others <-> no fakes systematics
-                            else if(systTree_list[itree] != "" && systTree_list[itree] != nominal_tree_name && (sample_list[isample] == "DY" || sample_list[isample].Contains("TTbar") || sample_list[isample].Contains("NPL")) ) {continue;}
 
         					//-- Check if this sample needs to be merged, i.e. if the samples before/after belong to the same "group of samples"
         					bool merge_this_sample = false;
