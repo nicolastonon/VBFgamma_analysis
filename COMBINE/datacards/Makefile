@@ -10,7 +10,7 @@
 CC=g++ #Compiler used
 DEBUG = -g
 CFLAGS = -c  $(DEBUG) #Compilation options
-LFLAGS = $(DEBUG) -lTMVA
+LFLAGS = $(DEBUG)
 ROOTFLAGS = `root-config --glibs --cflags`
 
 SCRIPT_PRODUCER = GenerateAllDatacards.exe
