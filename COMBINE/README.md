@@ -32,6 +32,7 @@ CODE EXAMPLE
 :put_litter_in_its_place:
 :new:
 -------------------------------------------->
+:construction: **README UNDER CONSTRUCTION**
 
 #### Useful links
 
@@ -44,17 +45,17 @@ CODE EXAMPLE
 _____________________________________________________________________________
 #### Table Of Contents
 
-* [Setup](#setup)
-<!-- 
-* [Generate datacards](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#setup)
-  * [Details](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#details)
+- [Setup](#setup)
 
-* [Combine commands](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#combine-commands)
+* [Generate datacards](#generate-datacards)
+  * [Details](#details)
+
+<!-- * [Combine commands](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#combine-commands)
   * [Expected significance](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#expected-significance-profile-likelihood)
   * [Observed significance](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#observed-significance-profile-likelihood)
   * [Asymptotic frequentist limits](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#asymptotic-frequentist-limits)
   * [Postfit templates, nuisances, etc.](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#postfit-templates-nuisances-etc-mlf)
-  * [Nuisance parameters](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#nuisance-parameters)
+  * [Nuisance parameters](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE#nuisance-parameters) -->
 
 
 _____________________________________________________________________________
@@ -96,7 +97,7 @@ scramv1 b
 
 # Generate datacards
 
-Move to the [datacards](https://github.com/nicolastonon/EFT-Simu-Pheno/tree/master/myAnalysis/COMBINE/datacards) directory to generate the final datacards.
+Move to the `datacards` directory to generate the final datacards.
 
 *TL;DR* :
 
@@ -119,7 +120,7 @@ In particular, you can set there the list of processes, of systematic uncertaint
   ./Generate_Datacard_Template.exe
   ```
 
-- [Parser_Datacard_Template.py](Parser_Datacard_Template.py)* : parses the template datacard (see above), and replaces specific key-words with the desired values (channel name, systematic value, etc.)
+- [Parser_Datacard_Template.py](Parser_Datacard_Template.py)* : parses the template datacard (see above), and replaces specific keywords with the desired values (channel name, systematic value, etc.)
 This code is called when running *ScriptProducer_GenerateAllDatacards.exe*.
 
 - [ScriptProducer_GenerateAllDatacards.cxx](ScriptProducer_GenerateAllDatacards.cxx) : asks the user to set options via command-line, and takes care of generating the final combined datacard.
@@ -129,7 +130,7 @@ This code is called when running *ScriptProducer_GenerateAllDatacards.exe*.
   ./ScriptProducer_GenerateAllDatacards.exe
   ```
 
-
+<!--
 # Combine commands
 
 :information_source: *Make sure you're using the right datacard name in the commands ; `COMBINED_datacard.txt` is only a dummy name*
@@ -145,7 +146,6 @@ This code is called when running *ScriptProducer_GenerateAllDatacards.exe*.
 - To access postfit informations (shapes, uncertainties, etc.), we also use the **Fitting** methods :
   - `FitDiagnostics` [[doc](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/nonstandard/#fitting-diagnostics)] : performs maximum likelihood fits to extract the signal yield and provide diagnostic tools such as pre and post-fit models and correlations
   - `MultiDimFit` [[doc](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/commonstatsmethods/#likelihood-fits-and-scans)] :  perform multi-dimensional fits and likelihood based scans/contours using models with several parameters of interest.
-
 
 
 ## Expected significance (Profile Likelihood)
@@ -213,7 +213,6 @@ combine -M AsymptoticLimits --noFitAsimov --run blind COMBINED_datacard.txt
 > **You should never use -t -1 to get blind limits!**
 
 *(Otherwise, the "nominal" nuisance parameter values are taken from fits to the data and are therefore not "blind" to the observed data by default (following the fully frequentist paradigm) ).*
-
 
 
 ## Postfit templates, nuisances, etc. (MLF)
@@ -297,4 +296,5 @@ You might want to remove the `autoMCStats` lines from the datacard in order to i
   ./Plot_Syst_Impacts.sh [DATACARD_NAME_NOEXT] [EXP_OBS]
   ```
   :information_source: The 1rst argument is the name of the datacard without its file extension. The 2nd argument ie either "exp" or "obs", depending if you want to blind the data or not.
-  :arrow_right: This creates a pdf plot representing the pulls of the NPs. -->
+  :arrow_right: This creates a pdf plot representing the pulls of the NPs.
+   -->

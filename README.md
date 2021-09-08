@@ -60,7 +60,7 @@ CODE EXAMPLE
     - [Input ntuples](#input-ntuples)
     - [Running the code](#running-the-code)
 - [Event yields](#event-yields)
-<!-- - [Combine](#combine) -->
+- [Combine](#combine)
 
 
 <!-- ![Mining gold](https://images.deepai.org/converted-papers/1805.00013/x1.png) -->
@@ -70,7 +70,7 @@ CODE EXAMPLE
 
 This standalone Ntuple-analysis code does not require CMSSW, and can be run locally offline.
 
-<!-- However, running `Combine` requires a CMSSW environment. -->
+However, running `Combine` requires a CMSSW environment.
 
 <!--
 :heavy_exclamation_mark: `Potato` and `Combine` are currently supported under CMSSW_10_2_X; however, Tensorflow2 (needed for NN training/evaluation) is only supported under CMSSW_11_1_X; so you may need to use different versions for each !
@@ -201,6 +201,6 @@ Modify the *main()* options to define the paths of the input rootfiles, etc.
 ./make_plot.sh
 ``` -->
 
-<!-- # Combine
+# Combine
 
-See the dedicated [README](https://github.com/nicolastonon/VBFgamma_analysis/COMBINE). -->
+See the dedicated [README](https://github.com/nicolastonon/VBFgamma_analysis/COMBINE).
