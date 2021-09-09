@@ -24,7 +24,7 @@ TString Get_Category_LatexName(TString cat)
 //    ##    #### ######## ######## ########        ##    ##     ## ########  ######## ########
 //--------------------------------------------
 
-void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TString region, TString signal, TString lumi, bool group_samples_together, bool remove_totalSF, TString channel, TString treename)
+void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TString region, TString signal, TString lumi, bool group_samples_together, bool remove_totalSF, TString channel, TString treename, bool printout_nofEntries)
 {
     bool create_latex_table = false; //true <-> also output latex-format yield tables
         bool blind = false; //true <-> don't include DATA in latex tables (but still include in printouts)
@@ -83,7 +83,6 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
             // cout<<"v_label[isample] "<<v_label[isample]<<endl; //Debug
 
             if(v_samples[isample] == "DATA") {continue;} //Data appended manually
-            // if(v_label[isample].Contains("TTbar") || v_label[isample].Contains("DY")) {continue;} //Consider DD NPL, not MC
 
             // cout<<"Pass "<<(isample == v_label.size()-1 || v_label[isample] != v_label[isample+1])<<endl; //Debug
 
@@ -100,7 +99,6 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     	for(int isample=0; isample<v_label.size(); isample++) //Declare all process names
     	{
             if(v_samples[isample] == "DATA") {continue;}
-            // if(v_label[isample].Contains("TTbar") || v_label[isample].Contains("DY")) {continue;}
 
             if(isample == v_label.size()-1 || v_label[isample] != v_label[isample+1])
     		{
@@ -136,10 +134,12 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
 	//NB : don't declare inside sample loop, cause might want to sum samples
     vector<double> v_yields_proc_allYears(v_samples.size(), 0), v_statErr_proc_allYears(v_samples.size(), 0); //Sum yields per process for all years
+    vector<int> v_entries_proc_allYears(v_samples.size(), 0);
     double yield_tmp = 0;
 	double yield_signals = 0;
 	double yield_bkg = 0;
 	double yield_DATA = 0;
+    int nentries_tmp = 0;
 
 	double statErr_tmp = 0;
 	double statErr_signals = 0;
@@ -269,29 +269,60 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 // if(region != "" && !is_goodCategory) {continue;}
 
                 bool pass = false;
-                if(region.Contains("HighVPt"))
+                if(region.Contains("SR")) //SR
                 {
-                    float ptCut = 200, mjj=200;
-                    bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                    bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                    pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
-                }
-                else if(region.Contains("LowVPt"))
-                {
-                    float ptCut = 75, fs = 22, mjj=500;
-                    bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > ptCut);
-                    bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                    pass = vjj_trig != 2 && lowPtCut && generalCuts;
-                }
-                if(region.Contains("SR"))
-                {
+                    if(region.Contains("HighVPt")) //HighVPt
+                    {
+                        float ptCut = (v_years[iyear]=="2016"? 175:200), mjj = 200, fs = 22;
+                        bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                        bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                        pass = ((vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut);
+                    }
+                    else //LowVPt
+                    {
+                        float mjj = 500, fs = 22;
+                        bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                        bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                        pass = (vjj_trig != 2 && lowPtCut && generalCuts);
+                    }
                     if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                    if(vjj_fs != 22) {continue;}
                 }
-                else if(region.Contains("CR"))
+                else //DY CR
                 {
-                    if(region.Contains("ee") && vjj_fs != 121) {continue;}
-                    else if(region.Contains("mm") && vjj_fs != 169) {continue;}
+                    if(region.Contains("CRee")) //ee
+                    {
+                        if(region.Contains("HighVPt")) //HighVPt
+                        {
+                            float ptCut = (v_years[iyear]=="2016"? 175:200), mjj = 200, fs = 121;
+                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                            pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
+                        }
+                        else //LowVPt
+                        {
+                            float mjj = 500, fs = 121;
+                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                            pass = (vjj_trig == 3 && lowPtCut && generalCuts);
+                        }
+                    }
+                    else //mm
+                    {
+                        if(region.Contains("HighVPt")) //HighVPt
+                        {
+                            float ptCut = (v_years[iyear]=="2016"? 175:200), mjj = 200, fs = 169;
+                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                            pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
+                        }
+                        else //LowVPt
+                        {
+                            float mjj = 500, fs = 169;
+                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                            pass = (vjj_trig == 3 && lowPtCut && generalCuts);
+                        }
+                    }
                 }
                 if(!pass) {continue;}
 
@@ -305,6 +336,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
                 v_yields_proc_allYears[isample]+= weight;
                 v_statErr_proc_allYears[isample]+= weight*weight;
+                v_entries_proc_allYears[isample]++;
 
                 if(v_samples[isample] == "DATA") //DATA
     			{
@@ -314,6 +346,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 else //MC
                 {
                     yield_tmp+= weight; statErr_tmp+= weight*weight;
+                    nentries_tmp++;
 
                     if(v_label[isample] == signal || v_label[isample] == "signal") //Signals, group together
                     {
@@ -330,6 +363,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
     		// cout<<"yield_bkg = "<<yield_bkg<<endl;
     		// cout<<"yield_tmp "<<yield_tmp<<endl;
+            // cout<<"nentries_tmp "<<nentries_tmp<<endl;
 
     		//Check if restart counter, or merge processes
             if(lumi != "Run2")
@@ -337,20 +371,26 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 if(v_samples[isample] != "DATA" && (isample == v_label.size()-1 || v_label[isample] != v_label[isample+1]))
                 {
                     file_out<<"--------------------------------------------"<<endl;
-                    file_out<<left<<setw(25)<<v_label[isample]<<setprecision(4)<<yield_tmp;
+                    file_out<<left<<setw(25)<<v_label[isample]<<std::fixed<<setprecision(4)<<yield_tmp;
                     // file_out<<v_label[isample]<<"\\t"<<yield_tmp;
-
-                    file_out<<" (+/- "<<sqrt(statErr_tmp)<<" stat.)"<<endl;
+                    file_out<<" (+/- "<<sqrt(statErr_tmp)<<" stat.)";
                     // cout<<left<<setw(25)<<v_label[isample]<<yield_tmp<<endl;
+                    if(printout_nofEntries)
+                    {
+                        if(nentries_tmp < yield_tmp*1.5) {file_out<<" "<<FRED("["<<std::fixed<<nentries_tmp<<" entries]");}
+                        else {file_out<<" ["<<std::fixed<<nentries_tmp<<" entries]";}
+                    }
+                    file_out<<endl;
 
                     if(create_latex_table && !v_label[isample].Contains("DATA") && v_label[isample] != signal)
-                    // if(create_latex_table && !v_label[isample].Contains("TTbar") && !v_label[isample].Contains("DY") && !v_label[isample].Contains("DATA")  && !v_label[isample].Contains("PrivMC"))
                     {
-                        file_latex<<fixed<<setprecision(precision)<<abs(yield_tmp)<<" ($\\pm$"<<fixed<<setprecision(precision)<<sqrt(statErr_tmp)<<") & "; //Single process
+                        file_latex<<std::fixed<<setprecision(precision)<<abs(yield_tmp)<<" ($\\pm$"<<fixed<<setprecision(precision)<<sqrt(statErr_tmp)<<") & "; //Single process
                     }
 
-                    yield_tmp = 0; //Reset after writing to file
+                    //-- Reset after writing to file
+                    yield_tmp = 0;
                     statErr_tmp = 0;
+                    nentries_tmp = 0;
                 } //write result
             }
         } //sample loop
@@ -359,14 +399,14 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
 
     if(lumi == "Run2") //Run 2: need to sum quadratically per-year errors
     {
-        float yield_currentGroup = 0, statErr_currentGroup = 0;
+        float yield_currentGroup = 0, statErr_currentGroup = 0; int entries_currentGroup = 0;
 
         for(int isample=0; isample<v_samples.size(); isample++)
         {
             if(v_samples[isample] == "DATA") {continue;} //printed separately
 
             //Combine errors from all years quadratically
-            yield_currentGroup+= v_yields_proc_allYears[isample], statErr_currentGroup+= v_statErr_proc_allYears[isample]; //NB: no need to square uncert. here, it is already ! (cf. above)
+            yield_currentGroup+= v_yields_proc_allYears[isample]; statErr_currentGroup+= v_statErr_proc_allYears[isample]; entries_currentGroup+= v_entries_proc_allYears[isample]; //NB: no need to square uncert. here, it is already ! (cf. above)
 
             if(group_samples_together && v_samples[isample] != "DATA" && isample < v_label.size()-1 && v_label[isample] == v_label[isample+1]) {continue;} //Sum processes from same group
 
@@ -375,16 +415,21 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
             file_out<<left<<setw(25)<<v_label[isample]<<setprecision(4)<<yield_currentGroup;
             // file_out<<v_label[isample]<<"\\t"<<yield_tmp;
 
-            file_out<<" (+/- "<<sqrt(statErr_currentGroup)<<" stat.)"<<endl;
+            file_out<<" (+/- "<<sqrt(statErr_currentGroup)<<" stat.)";
             // cout<<left<<setw(25)<<v_label[isample]<<yield_tmp<<endl;
+            if(printout_nofEntries)
+            {
+                if(entries_currentGroup < yield_currentGroup*1.5) {file_out<<" "<<FRED("["<<std::fixed<<entries_currentGroup<<" entries]");}
+                else {file_out<<" ["<<std::fixed<<entries_currentGroup<<" entries]";}
+            }
+            file_out<<endl;
 
-            if(create_latex_table && !v_label[isample].Contains("TTbar") && !v_label[isample].Contains("DY") && !v_label[isample].Contains("DATA") && v_label[isample]!="tZq" && v_label[isample]!="ttZ" && v_label[isample]!="tWZ")
-            // if(create_latex_table && !v_label[isample].Contains("TTbar") && !v_label[isample].Contains("DY") && !v_label[isample].Contains("DATA")  && !v_label[isample].Contains("PrivMC"))
+            if(create_latex_table)
             {
                 file_latex<<fixed<<setprecision(precision)<<abs(yield_currentGroup)<<" ($\\pm$"<<fixed<<setprecision(precision)<<sqrt(statErr_currentGroup)<<") & "; //Single process
             }
 
-            yield_currentGroup = 0; statErr_currentGroup = 0; //Reset
+            yield_currentGroup = 0; statErr_currentGroup = 0; entries_currentGroup = 0; //Reset
         }
     }
 
@@ -476,16 +521,29 @@ int main(int argc, char **argv)
     bool remove_totalSF = false; //SFs are applied to default weights ; can divide weight by total SF again to get nominal weight
     bool group_samples_together = false; //true <-> group similar samples together
     bool process_samples_byGroup = false; //true <-> read grouped samples (if already hadded together), else read individual samples and combine them when creating histograms if needed (default)
+    bool printout_nofEntries = true; //true <-> also print nof entries (in addition to yield)
 
 //--------------------------------------------
 //--------------------------------------------
 
-    vector<TString> v_lumis(1); TString dummy;
-    Apply_CommandArgs_Choices(argc, argv, v_lumis, region, dummy); //Get lumi/region via command line
-    // TString region = "";
-    // if(region != "") {region = Get_Category_Boolean_Name(region);}
-    if(v_lumis.size() == 3) {lumi = "Run2";}
-    else if(v_lumis[0] != "") {lumi = v_lumis[0];}
+    vector<TString> v_lumis, v_lumis_tmp; TString dummy;
+    Apply_CommandArgs_Choices(argc, argv, v_lumis_tmp, region, dummy); //Get lumi/region via command line
+
+    if(v_lumis_tmp.size() > 0)
+    {
+        for(int ilumi=0; ilumi<v_lumis_tmp.size(); ilumi++)
+        {
+            v_lumis.push_back(v_lumis_tmp[ilumi]);
+        }
+    }
+    else if(lumi == "all")
+    {
+        v_lumis.push_back("2016");
+        v_lumis.push_back("2017");
+        v_lumis.push_back("2018");
+    }
+    else {v_lumis.push_back(lumi);}
+    if(v_lumis.size() == 3) {v_lumis.push_back("Run2");}
 
 //--------------------------------------------
 //--------------------------------------------
@@ -512,21 +570,20 @@ int main(int argc, char **argv)
         v_samples.push_back("ZGTo2LG"); v_label.push_back("ZGTo2LG");
         v_samples.push_back("WGToLNuG"); v_label.push_back("WGToLNuG");
         v_samples.push_back("QCD"); v_label.push_back("QCD");
+        v_samples.push_back("DY"); v_label.push_back("DY");
         v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
+        v_samples.push_back("DYJetsLOJetBins"); v_label.push_back("DYJetsLOJetBins");
+        v_samples.push_back("DYJetsNLOJetBins"); v_label.push_back("DYJetsNLOJetBins");
         v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
     }
 
 //--------------------------------------------
 //--------------------------------------------
 
-    if(lumi == "all")
+    for(int ilumi=0; ilumi<v_lumis.size(); ilumi++)
     {
-        Compute_Write_Yields(v_samples, v_label, region, signal, "2016", group_samples_together, remove_totalSF, channel, treename);
-        Compute_Write_Yields(v_samples, v_label, region, signal, "2017", group_samples_together, remove_totalSF, channel, treename);
-        Compute_Write_Yields(v_samples, v_label, region, signal, "2018", group_samples_together, remove_totalSF, channel, treename);
-        Compute_Write_Yields(v_samples, v_label, region, signal, "Run2", group_samples_together, remove_totalSF, channel, treename); //should sum all years
+        Compute_Write_Yields(v_samples, v_label, region, signal, v_lumis[ilumi], group_samples_together, remove_totalSF, channel, treename, printout_nofEntries);
     }
-    else {Compute_Write_Yields(v_samples, v_label, region, signal, lumi, group_samples_together, remove_totalSF, channel, treename);}
 
 	return 0;
 }

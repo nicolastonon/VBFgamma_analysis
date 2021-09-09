@@ -54,7 +54,6 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
 
 	this->region = region;
 
-    //FIXME
     // if(region != "HighVPt" && region != "LowVPt") {cout<<BOLD(FRED("Wrong region "<<region<<" ! Abort !"))<<endl; this->stop_program = true;}
 
     this->use_paperStyle = use_paperStyle;
@@ -1141,14 +1140,15 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
                 //--- //FIXME
                 //--- Event weight variables
-                Int_t vjj_nlumiWeights = 113; //Default value
-                tree->SetBranchStatus("vjj_nlumiWeights", 1); tree->SetBranchAddress("vjj_nlumiWeights", &vjj_nlumiWeights);
-                tree->GetEntry(0); //Read first entry to get 'vjj_nlumiWeights' value
-                // tree->ResetBranchAddresses(); //Reset this branch
-                tree->SetBranchStatus("vjj_nlumiWeights", 0); //Not needed anymore
+                UInt_t vjj_nlumiWeights = 113; //Default value
                 Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
                 if(!isData)
                 {
+                    tree->SetBranchStatus("vjj_nlumiWeights", 1); tree->SetBranchAddress("vjj_nlumiWeights", &vjj_nlumiWeights);
+                    tree->GetEntry(0); //Read first entry to get 'vjj_nlumiWeights' value
+                    tree->SetBranchStatus("vjj_nlumiWeights", 0); //Not needed anymore
+                    // tree->ResetBranchAddresses(); //Reset this branch
+
                     tree->SetBranchStatus("vjj_photon_effWgt", 1); tree->SetBranchAddress("vjj_photon_effWgt", &vjj_photon_effWgt);
                     tree->SetBranchStatus("vjj_weight", 1); tree->SetBranchAddress("vjj_weight", &vjj_weight);
                     tree->SetBranchStatus("vjj_lumiWeights", 1); tree->SetBranchAddress("vjj_lumiWeights", vjj_lumiWeights);
@@ -1299,6 +1299,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 //---- APPLY EVENT CUTS HERE -------------------------
 
                     //FIXME
+                    //-- Read values of some variables used for event selections
                     Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
                     for(int ivar=0; ivar<total_var_list.size(); ivar++)
                     {
@@ -1306,36 +1307,67 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         else if(total_var_list[ivar] == "vjj_jj_deta") {vjj_jj_deta = *total_var_pfloats[ivar];}
                         else if(total_var_list[ivar] == "vjj_jj_m") {vjj_jj_m = *total_var_pfloats[ivar];}
                         else if(total_var_list[ivar] == "vjj_v_pt") {vjj_v_pt = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_jj_m") {vjj_jj_m = *total_var_pfloats[ivar];}
                         else if(total_var_list[ivar] == "vjj_lead_pt") {vjj_lead_pt = *total_var_pfloats[ivar];}
                         else if(total_var_list[ivar] == "vjj_sublead_pt") {vjj_sublead_pt = *total_var_pfloats[ivar];}
                         else if(total_var_list[ivar] == "vjj_njets") {*total_var_pfloats[ivar] = (float) *njets;}
                     }
 
+                    //Define pass/fail
                     bool pass = false;
-                    if(region.Contains("HighVPt"))
+                    if(region.Contains("SR")) //SR
                     {
-                        float ptCut = 200, mjj=200;
-                        bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                        bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                        pass = (vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut;
-                    }
-                    else if(region.Contains("LowVPt"))
-                    {
-                        float ptCut = 75, fs = 22, mjj=500;
-                        bool lowPtCut= (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > ptCut);
-                        bool generalCuts = ((vjj_isGood) && (vjj_jj_m>mjj) && (vjj_lead_pt>50) && (vjj_sublead_pt>50));
-                        pass = vjj_trig != 2 && lowPtCut && generalCuts;
-                    }
-                    if(region.Contains("SR"))
-                    {
+                        if(region.Contains("HighVPt")) //HighVPt
+                        {
+                            float ptCut = (v_lumiYears[iyear]=="2016"? 175:200), mjj = 200, fs = 22;
+                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                            pass = ((vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut);
+                        }
+                        else //LowVPt
+                        {
+                            float mjj = 500, fs = 22;
+                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                            pass = (vjj_trig != 2 && lowPtCut && generalCuts);
+                        }
                         if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                        if(vjj_fs != 22) {continue;}
                     }
-                    else if(region.Contains("CR"))
+                    else //DY CR
                     {
-                        if(region.Contains("ee") && vjj_fs != 121) {continue;}
-                        else if(region.Contains("mm") && vjj_fs != 169) {continue;}
+                        if(region.Contains("CRee")) //ee
+                        {
+                            if(region.Contains("HighVPt")) //HighVPt
+                            {
+                                float ptCut = (v_lumiYears[iyear]=="2016"? 175:200), mjj = 200, fs = 121;
+                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                                pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
+                            }
+                            else //LowVPt
+                            {
+                                float mjj = 500, fs = 121;
+                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                                pass = (vjj_trig == 3 && lowPtCut && generalCuts);
+                            }
+                        }
+                        else //mm
+                        {
+                            if(region.Contains("HighVPt")) //HighVPt
+                            {
+                                float ptCut = (v_lumiYears[iyear]=="2016"? 175:200), mjj = 200, fs = 169;
+                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                                pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
+                            }
+                            else //LowVPt
+                            {
+                                float mjj = 500, fs = 169;
+                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
+                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
+                                pass = (vjj_trig == 3 && lowPtCut && generalCuts);
+                            }
+                        }
                     }
                     if(!pass) {continue;}
 
@@ -1384,12 +1416,10 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                         }
                     } //Templates
 
-                    //FIXME
+                    //-- Weight definition
                     double weight_tmp = 1.;
                     if(!isData) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;} //FIXME
                     if(weight_tmp > 100000) {cout<<BOLD(FRED("Huge weight "<<weight_tmp<<""))<<endl; continue;}
-
-                    // double weight_tmp = eventWeight * eventMCFactor; //Fill histo with this weight ; manipulate differently depending on syst
                     // cout<<"eventWeight "<<eventWeight<<" / eventMCFactor "<<eventMCFactor<<" / weight_tmp "<<weight_tmp<<endl;
 
                     //-- F i l l     a l l      v a r i a b l e s (<-> consider full list of variables 'total_var_list')
@@ -2531,7 +2561,7 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
         h_uncert->SetFillStyle(3254); //3002 //3004
         h_uncert->SetFillColor(kBlack);
         h_uncert->SetLineWidth(0.);
-        // qw->AddEntry(h_uncert, "Uncert.", "F");
+        qw->AddEntry(h_uncert, "Uncert.", "F");
         // qw->AddEntry(h_uncert, "Uncertainty", "F");
 
 		//--Data on top of legend
@@ -2825,8 +2855,7 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
 		histo_ratio_data->SetMarkerSize(1.2); //changed from 1.4
         histo_ratio_data->GetXaxis()->SetTitleSize(0.05);
 
-        //FIXME
-        TGaxis::SetExponentOffset(-0.07, 0.01, "y");
+        TGaxis::SetExponentOffset(-0.07, 0.01, "y"); //Move the 'x 10^z' y-axis exponent in (x,y)
 
         //-- If a point is outside the y-range of the ratio pad defined by SetMaximum/SetMinimum(), it disappears with its error
         //-- Trick: fill 2 histos with points either above/below y-range, to plot some markers indicating missing points (cleaner)

@@ -2,15 +2,15 @@
 
 years=(2016 2017 2018) #Select data-taking years
 #years=(2016)
-processData=true #Hadd DATA samples
+processData=false #Hadd DATA samples
 processMC=true #Hadd MC samples
-mergeBySample=true #Merge samples
+mergeBySample=false #Merge samples
 mergeBySampleGroup=true #Merge sample groups
 force="" #"-f" <-> overwrite existing target files; "" <-> do not
 tolerance="" #'If the option -k is used, hadd will not exit on corrupt or non-existant input files but skip the offending files instead'; "" <-> do not; #Warning: you may want missing files to trigger a failure !
 
 ntupleDir="/eos/cms/store/cmst3/group/top/SMP-19-005/july20/SKimmed2_AllSamples_NewBDT" #Directory containing skimmed files
-dataStr="SinglePhoton|DoubleEG|DoubleMuon|EGamma" #What keywords should be considered as DATA
+dataStr="SinglePhoton|DoubleEG|DoubleMuon" #What keywords should be considered as DATA
 
 #outDir=$PWD/merged_ntuples
 outDir="/afs/cern.ch/work/n/ntonon/public/VBFphoton/CMSSW_10_2_27/src/UserCode/input_ntuples" #Where to write merged files #FIXME
@@ -97,19 +97,21 @@ if [ "$mergeBySampleGroup" = true ]; then
             # //--------------------------------------------
             #- Merge sample groups
 
-            #-- GJetsSherpaHighStat #2016-only
-            if [ "$yearname" = 2016 ]; then
-                hadd $force $outDir/$yearname/GJets.root $outDir/$yearname/merged_GJets_Pt-20To100*.root $outDir/$yearname/merged_GJets_Pt-100To200*.root $outDir/$yearname/merged_GJets_Pt-200To500*.root $outDir/$yearname/merged_GJets_Pt-500To1000*.root $outDir/$yearname/merged_GJets_Pt-1000To2000*.root $outDir/$yearname/merged_GJets_Pt-2000To5000*.root
-                #rm $outDir/$yearname/merged_GJets_Pt*.root
-            else
-                #-- GJetsLO #2017/18
-                hadd $outDir/$yearname/GJets.root $outDir/$yearname/merged_GJets_HT*_13TeV-madgraphMLM-pythia8.root
-                #rm $outDir/$yearname/merged_GJets_HT*_13TeV-madgraphMLM-pythia8.root
-            fi
+            #-- GJets
+            hadd $force $outDir/$yearname/GJets.root $outDir/$yearname/merged_GJets_Pt*.root
+            #rm $outDir/$yearname/merged_GJets_Pt*.root
 
-            #-- DY
-            # hadd $force $outDir/$yearname/DY.root $outDir/$yearname/merged_DYJetsToLL_M*.root
-            #rm $outDir/$yearname/merged_DYJetsToLL_M*.root
+            #-- GJets #Different sample
+            hadd $outDir/$yearname/GJets.root $outDir/$yearname/merged_GJets_HT*_13TeV-madgraphMLM-pythia8.root
+            #rm $outDir/$yearname/merged_GJets_HT*_13TeV-madgraphMLM-pythia8.root
+
+            #-- DYJetsLOJetBins
+            hadd $force $outDir/$yearname/DYJetsLOJetBins.root $outDir/$yearname/merged_DY*JetsToLL_M-50_*_13TeV-madgraphMLM-pythia8.root
+            #rm $outDir/$yearname/merged_DY*JetsToLL_M-50_*_13TeV-madgraphMLM-pythia8.root
+
+            #-- DYJetsNLOJetBins
+            hadd $force $outDir/$yearname/DYJetsNLOJetBins.root $outDir/$yearname/merged_DY*ToLL_*J*_13TeV-amcatnloFXFX-pythia8.root
+            #rm $outDir/$yearname/$outDir/$yearname/merged_DY*ToLL_*J*_13TeV-amcatnloFXFX-pythia8.root
 
             #-- DiPhoton
             hadd $force $outDir/$yearname/DiPhoton.root $outDir/$yearname/merged_DiPhotonJetsBox*.root
@@ -137,7 +139,7 @@ if [ "$mergeBySampleGroup" = true ]; then
 
             #-- Signal
             # cp -n $outDir/$yearname/merged_AJJ_EWK_*_13TeV_amcatnlo-pythia8.root $outDir/$yearname/VBFgamma.root
-            cp -n $outDir/$yearname/merged_GJets_SM_5f_*_EWK_13TeV-madgraph-herwig*.root $outDir/$yearname/VBFgamma.root
+            cp -n $outDir/$yearname/merged_GJets_SM_5f_*_EWK_13TeV-madgraph-herwigpp.root $outDir/$yearname/VBFgamma.root
 
             #-- Backgrounds
             cp -n $outDir/$yearname/merged_TTTo2L2Nu_*_13TeV-powheg-pythia8.root $outDir/$yearname/ttbar.root
@@ -166,7 +168,7 @@ if [ "$mergeBySampleGroup" = true ]; then
             #rm $outDir/$yearname/*DoubleMuon*.root
 
             if [ "$yearname" = 2018 ]; then
-                hadd $tolerance $force $outDir/$yearname/DATA.root $outDir/$yearname/*DoubleMuon* $outDir/$yearname/*EGamma* #If the option -k is used, hadd will not exit on corrupt or non-existant input files but skip the offending files instead
+                cp -n $outDir/$yearname/merged_DoubleMuon.root $outDir/$yearname/DATA.root #Single 2018 dataset
             fi
 
         done

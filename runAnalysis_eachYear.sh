@@ -3,17 +3,24 @@
 #-- SETTINGS
 #---------------------------------------
 ANALYSIS=true #Run analysis code
-YIELDS=true #Run yield code
+YIELDS=false #Run yield code
 
-years=(Run2) #Select data-taking years
-# years=(2016 2017 2018) #Select data-taking years
+#-- Select data-taking years
+# years=(Run2) #Full Run2
+years=(2016 2017 2018) #Each individual year
+# years=(2016 2017 2018 Run2) #Each individual year + full Run2 #NB: use only for plotting (whereas for creating histograms, simply processing 'Run2' will also produce all per-year histos) !
 
-regions=(SR_HighVPt SR_LowVPt CRee_HighVPt CRee_LowVPt CRmm_HighVPt CRmm_LowVPt) #Select regions (= event categories)
+#-- Select regions (= event categories)
+# regions=(SR_HighVPt SR_LowVPt CRee_HighVPt CRee_LowVPt CRmm_HighVPt CRmm_LowVPt)
+regions=(CRmm_LowVPt)
 
 #---------------------------------------
 
 make
 
+# if [ "${#years[@]}" = 3 ]; then
+#     years=(2016 2017 2018 Run2)
+# fi
 #---------------------------------------
 
 #-- ANALYSIS
