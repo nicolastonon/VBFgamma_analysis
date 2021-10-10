@@ -108,7 +108,7 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
     else {cout<<BOLD(FRED("ERROR ! I don't understand the list of years to process, please stick to the conventions ! Abort..."))<<endl; stop_program = true;}
     // this->lumiYear = lumiYear;
 
-    Set_Luminosity(lumiName); //Compute the corresponding integrated luminosity
+    Set_Luminosity(lumiName, region); //Compute the corresponding integrated luminosity
 
 //-------------
 
@@ -322,16 +322,22 @@ VBFgamma_analysis::~VBFgamma_analysis()
 /**
  * Compute the luminosity re-scaling factor (MC),  to be used thoughout the code
  * @param desired_luminosity [Value of the desired lumi in fb-1]
+ * See: https://gitlab.cern.ch/cms-ewkvjj/vjjskimmer/-/blob/master/python/samples/campaigns/Manager.py#L131
  */
-void VBFgamma_analysis::Set_Luminosity(TString luminame)
+void VBFgamma_analysis::Set_Luminosity(TString luminame, TString region)
 {
-    if(luminame == "2016") {lumiValue = 36.33;} //Preliminary was: 35.92
-	else if(luminame == "2017") {lumiValue = 41.53;}
-    else if(luminame == "2018") {lumiValue = 59.74;}
-    else if(luminame == "201617") {lumiValue = 36.33+41.53;}
-    else if(luminame == "201618") {lumiValue = 36.33+59.74;}
-    else if(luminame == "201718") {lumiValue = 41.53+59.74;}
-    else if(luminame == "Run2") {lumiValue = 36.33+41.53+59.74;}
+    float lumi16 = 35.9; //Official is 36.33 //Preliminary was: 35.92
+    float lumi17 = 41.4; //Official is 41.53
+    float lumi18 = 59.7; //Official is 59.74
+    if(region == "SR_LowVPt") {lumi16 = 28.2; lumi17 = 7.7;}
+
+    if(luminame == "2016") {lumiValue = lumi16;}
+	else if(luminame == "2017") {lumiValue = lumi17;}
+    else if(luminame == "2018") {lumiValue = lumi18;}
+    else if(luminame == "201617") {lumiValue = lumi16+lumi17;}
+    else if(luminame == "201618") {lumiValue = lumi16+lumi18;}
+    else if(luminame == "201718") {lumiValue = lumi17+lumi18;}
+    else if(luminame == "Run2") {lumiValue = lumi16+lumi17+lumi18;}
 
 	assert(lumiValue > 0 && "Using wrong lumi reference -- FIX IT !"); //Make sure we use a sensible lumi value
 
@@ -579,7 +585,7 @@ void VBFgamma_analysis::Train_BDT(TString channel)
             Double_t backgroundWeight = 1.0;
 
             //-- Weight definition
-            TString weightExp = "vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt";
+            TString weightExp = "vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0]"; //'/ vjj_mu_effWgt'
             if(use_relative_weights) {weightExp = "fabs(" + weightExp + ")";}
 
             //-- Choose between absolute/relative weights for training
@@ -1061,6 +1067,31 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     			//Disactivate all un-necessary branches ; below, activate only needed ones
     			tree->SetBranchStatus("*", 0); //disable all branches by default, speed up
 
+                //-- Weights and others
+                //NB: a) first set specific branch addresses; b) then automatically set addresses of all MVA/inputs branches; c) then solve address conflicts
+                UInt_t vjj_nlumiWeights = 113; //Default value
+                Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_ele_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
+                Char_t vjj_photonIsMatched;
+                if(!isData)
+                {
+                    tree->SetBranchStatus("vjj_nlumiWeights", 1); tree->SetBranchAddress("vjj_nlumiWeights", &vjj_nlumiWeights);
+                    tree->GetEntry(0); //Read first entry to get 'vjj_nlumiWeights' value
+                    tree->SetBranchStatus("vjj_nlumiWeights", 0); //Not needed anymore
+
+                    tree->SetBranchStatus("vjj_photon_effWgt", 1); tree->SetBranchAddress("vjj_photon_effWgt", &vjj_photon_effWgt);
+                    tree->SetBranchStatus("vjj_weight", 1); tree->SetBranchAddress("vjj_weight", &vjj_weight);
+                    tree->SetBranchStatus("vjj_lumiWeights", 1); tree->SetBranchAddress("vjj_lumiWeights", vjj_lumiWeights);
+                    tree->SetBranchStatus("vjj_mu_effWgt", 1); tree->SetBranchAddress("vjj_mu_effWgt", &vjj_mu_effWgt);
+                    tree->SetBranchStatus("vjj_ele_effWgt", 1); tree->SetBranchAddress("vjj_ele_effWgt", &vjj_ele_effWgt);
+
+                    tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
+                }
+
+                //-- Categories (boolean flags)
+                Char_t is_goodCategory = false; //Cut on event category flag
+                TString cat_name = Get_Category_Boolean_Name(this->region);
+                tree->SetBranchStatus(cat_name, 1); tree->SetBranchAddress(cat_name, &is_goodCategory);
+
                 //-- Always keep track of these vars (needed for different templates, syst, etc.)
                 float* channel = new float;
                 UInt_t* njets = new UInt_t;
@@ -1117,7 +1148,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                 /*
     			//--- Cut on relevant event selection stored as flag (Char_t)
                 //NB: don't 'call' the flag directly, use function Get_Category_Boolean_Name() instead (need different flags for NPL samples)
-    			Char_t is_goodCategory = true; //Cut on event category flag
                 // vector<Char_t> v_is_goodCategory(4, 1);
                 if(cat_tmp != "")
                 {
@@ -1137,43 +1167,6 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                     }
                 }
                 */
-
-                //--- //FIXME
-                //--- Event weight variables
-                UInt_t vjj_nlumiWeights = 113; //Default value
-                Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
-                if(!isData)
-                {
-                    tree->SetBranchStatus("vjj_nlumiWeights", 1); tree->SetBranchAddress("vjj_nlumiWeights", &vjj_nlumiWeights);
-                    tree->GetEntry(0); //Read first entry to get 'vjj_nlumiWeights' value
-                    tree->SetBranchStatus("vjj_nlumiWeights", 0); //Not needed anymore
-                    // tree->ResetBranchAddresses(); //Reset this branch
-
-                    tree->SetBranchStatus("vjj_photon_effWgt", 1); tree->SetBranchAddress("vjj_photon_effWgt", &vjj_photon_effWgt);
-                    tree->SetBranchStatus("vjj_weight", 1); tree->SetBranchAddress("vjj_weight", &vjj_weight);
-                    tree->SetBranchStatus("vjj_lumiWeights", 1); tree->SetBranchAddress("vjj_lumiWeights", vjj_lumiWeights);
-                    tree->SetBranchStatus("vjj_mu_effWgt", 1); tree->SetBranchAddress("vjj_mu_effWgt", &vjj_mu_effWgt);
-                }
-
-                //-- Event selection variables
-                Bool_t vjj_isGood;
-                Int_t vjj_fs, vjj_trig;
-                Char_t vjj_photonIsMatched;
-                tree->SetBranchStatus("vjj_trig", 1); tree->SetBranchAddress("vjj_trig", &vjj_trig);
-                tree->SetBranchStatus("vjj_isGood", 1); tree->SetBranchAddress("vjj_isGood", &vjj_isGood);
-                tree->SetBranchStatus("vjj_fs", 1); tree->SetBranchAddress("vjj_fs", &vjj_fs);
-                if(region.Contains("SR") && sample_list[isample] == "QCD" || sample_list[isample] == "ttbar")
-                {
-                    tree->SetBranchStatus("vjj_photonIsMatched", 1); tree->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
-                }
-                // Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
-                // tree->SetBranchStatus("vjj_v_eta", 1); tree->SetBranchAddress("vjj_v_eta", &vjj_v_eta);
-                // tree->SetBranchStatus("vjj_jj_deta", 1); tree->SetBranchAddress("vjj_jj_deta", &vjj_jj_deta);
-                // tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
-                // tree->SetBranchStatus("vjj_v_pt", 1); tree->SetBranchAddress("vjj_v_pt", &vjj_v_pt);
-                // tree->SetBranchStatus("vjj_jj_m", 1); tree->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
-                // tree->SetBranchStatus("vjj_lead_pt", 1); tree->SetBranchAddress("vjj_lead_pt", &vjj_lead_pt);
-                // tree->SetBranchStatus("vjj_sublead_pt", 1); tree->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
 
                 //-- Reserve 1 float for each systematic weight (also for nominal to keep ordering, but not used)
     			vector<Double_t*> v_double_systWeights(syst_list.size(), NULL);
@@ -1234,7 +1227,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
     						if(makeHisto_inputVars) //Kinematic variables
                             {
-                                if(!Get_Variable_Range(total_var_list[ivar], nbins, xmin, xmax)) {cout<<FRED("Unknown variable name : "<<total_var_list[ivar]<<"! (include it in function Get_Variable_Range() in Helper.cxx)")<<endl; continue;} //Get binning for this input variable
+                                if(!Get_Variable_Range(total_var_list[ivar], nbins, xmin, xmax, region)) {cout<<FRED("Unknown variable name : "<<total_var_list[ivar]<<"! (include it in function Get_Variable_Range() in Helper.cxx)")<<endl; continue;} //Get binning for this input variable
                                 if(region.Contains("ttz4l", TString::kIgnoreCase) && !total_var_list[ivar].Contains("njets") && !total_var_list[ivar].Contains("nbjets") && !total_var_list[ivar].Contains("channel")) {nbins = (int) (nbins / 2);} //Need tighter binning in low-stat regions
                             }
                             else //Templates
@@ -1298,81 +1291,9 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
 //---- APPLY EVENT CUTS HERE -------------------------
 
-                    //FIXME
-                    //-- Read values of some variables used for event selections
-                    Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
-                    for(int ivar=0; ivar<total_var_list.size(); ivar++)
-                    {
-                        if(total_var_list[ivar] == "vjj_v_eta") {vjj_v_eta = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_jj_deta") {vjj_jj_deta = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_jj_m") {vjj_jj_m = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_v_pt") {vjj_v_pt = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_lead_pt") {vjj_lead_pt = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_sublead_pt") {vjj_sublead_pt = *total_var_pfloats[ivar];}
-                        else if(total_var_list[ivar] == "vjj_njets") {*total_var_pfloats[ivar] = (float) *njets;}
-                    }
-
-                    //Define pass/fail
-                    bool pass = false;
-                    if(region.Contains("SR")) //SR
-                    {
-                        if(region.Contains("HighVPt")) //HighVPt
-                        {
-                            float ptCut = (v_lumiYears[iyear]=="2016"? 175:200), mjj = 200, fs = 22;
-                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                            pass = ((vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut);
-                        }
-                        else //LowVPt
-                        {
-                            float mjj = 500, fs = 22;
-                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                            pass = (vjj_trig != 2 && lowPtCut && generalCuts);
-                        }
-                        if((sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                    }
-                    else //DY CR
-                    {
-                        if(region.Contains("CRee")) //ee
-                        {
-                            if(region.Contains("HighVPt")) //HighVPt
-                            {
-                                float ptCut = (v_lumiYears[iyear]=="2016"? 175:200), mjj = 200, fs = 121;
-                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                                pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
-                            }
-                            else //LowVPt
-                            {
-                                float mjj = 500, fs = 121;
-                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                                pass = (vjj_trig == 3 && lowPtCut && generalCuts);
-                            }
-                        }
-                        else //mm
-                        {
-                            if(region.Contains("HighVPt")) //HighVPt
-                            {
-                                float ptCut = (v_lumiYears[iyear]=="2016"? 175:200), mjj = 200, fs = 169;
-                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                                pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
-                            }
-                            else //LowVPt
-                            {
-                                float mjj = 500, fs = 169;
-                                bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                                bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                                pass = (vjj_trig == 3 && lowPtCut && generalCuts);
-                            }
-                        }
-                    }
-                    if(!pass) {continue;}
-
                     //--- Cut on category flag
-                    // if(!is_goodCategory) {continue;}
+                    if(!is_goodCategory) {continue;}
+                    if(this->region.Contains("SR") && (sample_list[isample] == "QCD" || sample_list[isample] == "ttbar") && vjj_photonIsMatched == 1) {continue;}
                     // if(std::accumulate(v_is_goodCategory.begin(), v_is_goodCategory.end(), 0) != 1) {continue;} //Check whether at least 1 cat. flag is true
 
     				bool pass_all_cuts = true;
@@ -1418,7 +1339,19 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
 
                     //-- Weight definition
                     double weight_tmp = 1.;
-                    if(!isData) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;} //FIXME
+
+                    //FIXME //-- What are definitions ?
+                    //vjj_weight = wsf*event.puWeight*prefirew
+                    //vjj_lumiWeights[0] = nominal MC generator weight
+                    if(!isData)
+                    {
+                        if(region.Contains("SR")) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0];}
+                        else if(region.Contains("CRee")) {weight_tmp = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0];}
+                        else if(region.Contains("CRmm")) {weight_tmp = vjj_mu_effWgt * vjj_weight * vjj_lumiWeights[0];}
+                        // if(region.Contains("SR")) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
+                        // else if(region.Contains("CRee")) {weight_tmp = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
+                        // else if(region.Contains("CRmm")) {weight_tmp = vjj_weight * vjj_lumiWeights[0];}
+                    }
                     if(weight_tmp > 100000) {cout<<BOLD(FRED("Huge weight "<<weight_tmp<<""))<<endl; continue;}
                     // cout<<"eventWeight "<<eventWeight<<" / eventMCFactor "<<eventMCFactor<<" / weight_tmp "<<weight_tmp<<endl;
 
@@ -3115,7 +3048,7 @@ void VBFgamma_analysis::Draw_Templates(bool drawInputVars, TString channel, bool
         else //combine ruins x-axis info, so can't rely on binning of the TH1F; call same functions as used to produce the histos to get the same binning
         {
             int nbins = 0; float xmin = 0, xmax = 0;
-            if(drawInputVars) {Get_Variable_Range(total_var_list[ivar], nbins, xmin, xmax);}
+            if(drawInputVars) {Get_Variable_Range(total_var_list[ivar], nbins, xmin, xmax, region);}
             else {int nbjets_min=0,nbjets_max=0,njets_min=0,njets_max=0; vector<float> minmax_bounds; Get_Template_Range(nbins, xmin, xmax, total_var_list[ivar], plot_onlyMaxNodeEvents, nbjets_min, nbjets_max, njets_min, njets_max, minmax_bounds);} //NB: for NNs the binning is anyway arbitrary (would need to read NN_settings file, etc.)
 
             if(xmax != 0)

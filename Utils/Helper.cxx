@@ -934,87 +934,87 @@ void Set_Custom_ColorPalette(vector<TColor*> &v_custom_colors, vector<int> &v, v
 */
 
 //Store here the binnings and ranges of all the variables to be plotted via ControlHistograms files
-bool Get_Variable_Range(TString var, int& nbins, float& xmin, float& xmax)
+bool Get_Variable_Range(TString var, int& nbins, float& xmin, float& xmax, TString region)
 {
-    // {nbins = 20; xmin = -1; xmax = 1; return true;}
-
     //Categories are either 0 or 1 (NB : encoded in Char_t!)
     if(var.BeginsWith("is_") || var.BeginsWith("passed") ) {nbins = 2; xmin = 0; xmax = 2;}
 
-    if(var == "vjj_v_pt") {nbins = 20; xmin = 0; xmax = 600;}
-    else if(var == "vjj_v_eta") {nbins = 20; xmin = -2.4; xmax = 2.4;}
-    else if(var == "vjj_v_ystar") {nbins = 20; xmin = -4; xmax = 4;}
+    if(var == "vjj_v_pt") {xmin = 0; xmax = 600;}
+    else if(var == "vjj_v_eta") {xmin = -2.4; xmax = 2.4;}
+    else if(var == "vjj_v_ystar") {xmin = -4; xmax = 4;}
 
-    else if(var == "vjj_lead_pt") {nbins = 20; xmin = 0; xmax = 800;}
-    else if(var == "vjj_lead_eta") {nbins = 20; xmin = -4; xmax = 4;}
-    else if(var == "vjj_lead_m") {nbins = 20; xmin = 0; xmax = 80;}
+    else if(var == "vjj_lead_pt") {xmin = 0; xmax = 800;}
+    else if(var == "vjj_lead_eta") {xmin = -4; xmax = 4;}
+    else if(var == "vjj_lead_m") {xmin = 0; xmax = 80;}
 
-    else if(var == "vjj_sublead_pt") {nbins = 20; xmin = 0; xmax = 400;}
-    else if(var == "vjj_sublead_eta") {nbins = 20; xmin = -4; xmax = 4;}
-    else if(var == "vjj_sublead_m") {nbins = 20; xmin = 0; xmax = 50;}
+    else if(var == "vjj_sublead_pt") {xmin = 0; xmax = 400;}
+    else if(var == "vjj_sublead_eta") {xmin = -4; xmax = 4;}
+    else if(var == "vjj_sublead_m") {xmin = 0; xmax = 50;}
 
-    else if(var == "vjj_jj_pt") {nbins = 20; xmin = 0; xmax = 600;}
-    else if(var == "vjj_jj_eta") {nbins = 20; xmin = -4; xmax = 4;}
-    else if(var == "vjj_jj_m") {nbins = 20; xmin = 200; xmax = 1600;}
-    else if(var == "vjj_jj_scalarht") {nbins = 20; xmin = 100; xmax = 1100;}
-    else if(var == "vjj_jj_deta") {nbins = 20; xmin = 0; xmax = 5;}
-    else if(var == "vjj_jj_sumabseta") {nbins = 20; xmin = 0; xmax = 6;}
+    else if(var == "vjj_jj_pt") {xmin = 0; xmax = 600;}
+    else if(var == "vjj_jj_eta") {xmin = -4; xmax = 4;}
+    else if(var == "vjj_jj_m")
+    {
+        xmin = 200; xmax = 1600;
+        if(region.Contains("LowVPt")) {xmin = 500;}
+    }
+    else if(var == "vjj_jj_scalarht") {xmin = 100; xmax = 1100;}
+    else if(var == "vjj_jj_deta") {xmin = 0; xmax = 5;}
+    else if(var == "vjj_jj_sumabseta") {xmin = 0; xmax = 6;}
 
-    else if(var == "vjj_vjj_pt") {nbins = 20; xmin = 0; xmax = 200;}
-    else if(var == "vjj_vjj_eta") {nbins = 20; xmin = -7; xmax = 7;}
-    else if(var == "vjj_vjj_m") {nbins = 20; xmin = 500; xmax = 2500;}
-    else if(var == "vjj_vjj_scalarht") {nbins = 20; xmin = 300; xmax = 1500;}
-    else if(var == "vjj_vjj_sphericity") {nbins = 20; xmin = 0; xmax = 600;}
-    else if(var == "vjj_vjj_aplanarity") {nbins = 20; xmin = 0; xmax = 50;}
-    else if(var == "vjj_vjj_isotropy") {nbins = 20; xmin = 0.2; xmax = 1.;}
-    else if(var == "vjj_vjj_C") {nbins = 20; xmin = 0; xmax = 2000000;}
-    else if(var == "vjj_vjj_D") {nbins = 20; xmin = 0; xmax = 20000000;}
-    else if(var == "vjj_jj_dr2v") {nbins = 20; xmin = 2.; xmax = 5.;}
+    else if(var == "vjj_vjj_pt") {xmin = 0; xmax = 200;}
+    else if(var == "vjj_vjj_eta") {xmin = -7; xmax = 7;}
+    else if(var == "vjj_vjj_m") {xmin = 500; xmax = 2500;}
+    else if(var == "vjj_vjj_scalarht") {xmin = 300; xmax = 1500;}
+    else if(var == "vjj_vjj_sphericity") {xmin = 0; xmax = 600;}
+    else if(var == "vjj_vjj_aplanarity") {xmin = 0; xmax = 50;}
+    else if(var == "vjj_vjj_isotropy") {xmin = 0.2; xmax = 1.;}
+    else if(var == "vjj_vjj_C") {xmin = 0; xmax = 2000000;}
+    else if(var == "vjj_vjj_D") {xmin = 0; xmax = 20000000;}
+    else if(var == "vjj_jj_dr2v") {xmin = 2.; xmax = 5.;}
 
-    else if(var == "vjj_newvaraplanarity") {nbins = 20; xmin = 0; xmax = 0.1;}
-    else if(var == "vjj_newvarC") {nbins = 20; xmin = 0; xmax = 1;}
-    else if(var == "vjj_newvarD") {nbins = 20; xmin = 0; xmax = 0.2;}
-    else if(var == "vjj_newvarjj_vdphi") {nbins = 20; xmin = 2.5; xmax = 4;}
-    else if(var == "vjj_newvarsublead_dphivj") {nbins = 20; xmin = 0; xmax = 6;}
-    else if(var == "vjj_newvarlead_dphivj") {nbins = 20; xmin = 2.; xmax = 5;}
-    else if(var == "vjj_newvarlead_detavj") {nbins = 20; xmin = 0; xmax = 4;}
-    else if(var == "vjj_newvarsublead_detavj") {nbins = 20; xmin = 0; xmax = 4;}
-    else if(var == "vjj_newvarvjj_deta") {nbins = 20; xmin = 0; xmax = 6;}
-    else if(var == "vjj_newvarcircularity") {nbins = 20; xmin = 0; xmax = 1.;}
-    else if(var == "vjj_newvarisotropy") {nbins = 20; xmin = 0.2; xmax = 1.;}
-    else if(var == "vjj_newvarsphericity") {nbins = 20; xmin = 0; xmax = 0.8;}
+    else if(var == "vjj_newvaraplanarity") {xmin = 0; xmax = 0.1;}
+    else if(var == "vjj_newvarC") {xmin = 0; xmax = 1;}
+    else if(var == "vjj_newvarD") {xmin = 0; xmax = 0.2;}
+    else if(var == "vjj_newvarjj_vdphi") {xmin = 2.5; xmax = 4;}
+    else if(var == "vjj_newvarsublead_dphivj") {xmin = 0; xmax = 6;}
+    else if(var == "vjj_newvarlead_dphivj") {xmin = 2.; xmax = 5;}
+    else if(var == "vjj_newvarlead_detavj") {xmin = 0; xmax = 4;}
+    else if(var == "vjj_newvarsublead_detavj") {xmin = 0; xmax = 4;}
+    else if(var == "vjj_newvarvjj_deta") {xmin = 0; xmax = 6;}
+    else if(var == "vjj_newvarcircularity") {xmin = 0; xmax = 1.;}
+    else if(var == "vjj_newvarisotropy") {xmin = 0.2; xmax = 1.;}
+    else if(var == "vjj_newvarsphericity") {xmin = 0; xmax = 0.8;}
 
-    else if(var == "vjj_mva_NeginHigh2016BDT") {nbins = 20; xmin = -0.5; xmax = 0.5;}
-    else if(var == "vjj_mva_NeginHigh2017BDT") {nbins = 20; xmin = -0.5; xmax = 0.5;}
-    else if(var == "vjj_mva_NeginHigh2018BDT") {nbins = 20; xmin = -0.5; xmax = 0.5;}
+    else if(var == "vjj_mva_NeginHigh2016BDT") {xmin = -0.5; xmax = 0.5;}
+    else if(var == "vjj_mva_NeginHigh2017BDT") {xmin = -0.5; xmax = 0.5;}
+    else if(var == "vjj_mva_NeginHigh2018BDT") {xmin = -0.5; xmax = 0.5;}
 
     else if(var == "vjj_njets") {nbins = 8; xmin = 2; xmax = 10;}
     else if(var == "vjj_nextraj") {nbins = 7; xmin = 0; xmax = 7;}
-    else if(var == "vjj_j_maxAbsEta") {nbins = 20; xmin = 0; xmax = 4.5;}
-    else if(var == "vjj_j_minAbsEta") {nbins = 20; xmin = 0; xmax = 2.5;}
-    else if(var == "vjj_centhtsoft" || var == "vjj_htsoft") {nbins = 20; xmin = 0; xmax = 100;}
+    else if(var == "vjj_j_maxAbsEta") {xmin = 0; xmax = 4.5;}
+    else if(var == "vjj_j_minAbsEta") {xmin = 0; xmax = 2.5;}
+    else if(var == "vjj_centhtsoft" || var == "vjj_htsoft") {xmin = 0; xmax = 100;}
 
-    else if(var.BeginsWith("cos", TString::kIgnoreCase)) {nbins = 20; xmin = -1.; xmax = 1.;}
-    else if(var.Contains("CSV", TString::kIgnoreCase)) {nbins = 20; xmin = 0.; xmax = 1.1;}
-    else if(var.Contains("dR") || var.Contains("DelR", TString::kIgnoreCase) ) {nbins = 20; xmin = 0; xmax = 6.;}
+    else if(var.BeginsWith("cos", TString::kIgnoreCase)) {xmin = -1.; xmax = 1.;}
+    else if(var.Contains("CSV", TString::kIgnoreCase)) {xmin = 0.; xmax = 1.1;}
+    else if(var.Contains("dR") || var.Contains("DelR", TString::kIgnoreCase) ) {xmin = 0; xmax = 6.;}
     else if(var.Contains("deta", TString::kIgnoreCase) ) {nbins = 15; xmin = 0; xmax = 6.;}
-    else if(var.Contains("eta", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
-    else if(var.Contains("_phi", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
-    else if(var.Contains("_dphi", TString::kIgnoreCase) ) {nbins = 20; xmin = -3.; xmax = 3.;}
-    else if(var.Contains("_qgl", TString::kIgnoreCase) ) {nbins = 20; xmin = 0.; xmax = 1.;}
-    else if(var.Contains("_dr2v", TString::kIgnoreCase) ) {nbins = 20; xmin = 1.; xmax = 6.;}
-    else if(var.Contains("_isotropy", TString::kIgnoreCase) ) {nbins = 20; xmin = 0.; xmax = 1.;}
-    else if(var.Contains("_circularity", TString::kIgnoreCase) ) {nbins = 20; xmin = 0.; xmax = 1.;}
-    else if(var.Contains("vjj_mva_", TString::kIgnoreCase) ) {nbins = 20; xmin = -1.; xmax = 1.;}
+    else if(var.Contains("eta", TString::kIgnoreCase) ) {xmin = -3.; xmax = 3.;}
+    else if(var.Contains("_phi", TString::kIgnoreCase) ) {xmin = -3.; xmax = 3.;}
+    else if(var.Contains("_dphi", TString::kIgnoreCase) ) {xmin = -3.; xmax = 3.;}
+    else if(var.Contains("_qgl", TString::kIgnoreCase) ) {xmin = 0.; xmax = 1.;}
+    else if(var.Contains("_dr2v", TString::kIgnoreCase) ) {xmin = 1.; xmax = 6.;}
+    else if(var.Contains("_isotropy", TString::kIgnoreCase) ) {xmin = 0.; xmax = 1.;}
+    else if(var.Contains("_circularity", TString::kIgnoreCase) ) {xmin = 0.; xmax = 1.;}
+    else if(var.Contains("vjj_mva_", TString::kIgnoreCase) ) {xmin = -1.; xmax = 1.;}
 
     else if(var.Contains("_is") ) {nbins = 2; xmin = 0.; xmax = 2.;}
 
     else if(var == "njets") {nbins = 8; xmin = 0.; xmax = 8;}
     else if(var == "nbjets") {nbins = 6; xmin = 0.; xmax = 6;}
 
-    // else if(var == "Lep3Pt") {nbins = 20; xmin = 0; xmax = 80;}
-
-    else {nbins = 20; xmin = -5.; xmax = 300.;}
+    else {nbins = 40; xmin = -5.; xmax = 300.;}
     // else {return false;}
 
 	return true;
@@ -1152,31 +1152,19 @@ TString Get_Variable_Name(TString var)
 //Get var name corresponding to category
 //isFake <-> use different flags for prompt/fake events
 //NB: always call this function to automate cuts on flags, since they differ for NPL sample, etc.
-TString Get_Category_Boolean_Name(TString region, bool isFake)
+TString Get_Category_Boolean_Name(TString region)
 {
     TString name = "";
-
     region.ToLower();
 
-    // if(region=="tZq") {return "is_tZq_3l_SR";}
-    // else if(region=="ttZ") {return "is_ttZ_3l_SR";}
-    // else if(region=="tWZ") {return "is_tWZ_3l_SR";}
-
-    if(region=="signal") {name = "is_signal_SR";}
-    else if(region=="tzq") {name = "is_tzq_SR";}
-    else if(region=="ttz") {name = "is_ttz_SR";}
-    else if(region=="ttz4l") {name = "is_ttz4l_SR";}
-
-    else if(region=="xg") {name = "is_xg_CR";}
-    else if(region=="zz") {name = "is_zz_CR";}
-    else if(region=="tx") {name = "is_tX_CR";}
-    else if(region=="tt") {name = "is_tt_CR";}
-    else if(region=="wz") {name = "is_wz_CR";}
-    else if(region=="dy") {name = "is_dy_CR";}
+    if(region == "sr_highvpt") {name = "vjj_isHighVPt";}
+    else if(region == "sr_lowvpt") {name = "vjj_isLowVPt";}
+    else if(region == "cree_highvpt") {name = "vjj_isHighVPtee";}
+    else if(region == "cree_lowvpt") {name = "vjj_isLowVPtee";}
+    else if(region == "crmm_highvpt") {name = "vjj_isHighVPtmm";}
+    else if(region == "crmm_lowvpt") {name = "vjj_isLowVPtmm";}
 
     else {cout<<"Warning: empty category name..."<<endl;}
-
-    if(isFake && name != "") {name+= "Fake";}
 
     return name;
 }

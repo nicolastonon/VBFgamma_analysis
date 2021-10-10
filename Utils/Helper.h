@@ -123,10 +123,10 @@ void Inflate_Syst_inShapeTemplate(TH1F*&, TH1F*, float);
 bool Apply_CommandArgs_Choices(int, char**, vector<TString>&, TString&, TString&);
 void Get_Samples_Colors(vector<int>&, vector<TColor*>&, vector<TString>, vector<TString>, int);
 // void Set_Custom_ColorPalette(vector<TColor*>&, vector<int>&, vector<TString>); //Set custom color palette
-bool Get_Variable_Range(TString, int&, float&, float&);
+bool Get_Variable_Range(TString, int&, float&, float&, TString="");
 void Get_Template_Range(int&, float&, float&, TString, bool, int&, int&, int&, int&, vector<float>);
 TString Get_Variable_Name(TString);
-TString Get_Category_Boolean_Name(TString, bool=false);
+TString Get_Category_Boolean_Name(TString);
 float Count_Total_Nof_Entries(TString, TString, vector<TString>, vector<TString>, vector<TString>, vector<TString>, vector<TString>, bool, bool);
 TString Get_Modified_SystName(TString, TString, TString="");
 void Get_Pointer_GENHisto(TH1F*&, TString);

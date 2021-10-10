@@ -86,7 +86,7 @@ class VBFgamma_analysis
 	private :
 
 //--- METHODS
-    void Set_Luminosity(TString);
+    void Set_Luminosity(TString, TString="");
 
 //--- MEMBERS
     TString nominal_tree_name = "result"; //Name of the nominal tree to read in rootfiles

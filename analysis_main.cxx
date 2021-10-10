@@ -147,7 +147,8 @@ int main(int argc, char **argv)
     thesamplelist.push_back("QCD"); thesamplegroups.push_back("QCD");
 
     //DY
-    thesamplelist.push_back("DYJetsNLO"); thesamplegroups.push_back("DYJetsNLO");
+    thesamplelist.push_back("DYJetsNLOJetBins"); thesamplegroups.push_back("DYJetsNLOJetBins");
+    // thesamplelist.push_back("DYJetsNLO"); thesamplegroups.push_back("DYJetsNLO");
 
     //LLJJ
     thesamplelist.push_back("LLJJ"); thesamplegroups.push_back("LLJJ");
@@ -166,31 +167,21 @@ int main(int argc, char **argv)
 
     std::vector<TString > thevarlist;
 
-    // some inf
-    // thevarlist.push_back("vjj_jj_m");
-    // thevarlist.push_back("vjj_centj_ystar");
-    // thevarlist.push_back("vjj_jj_dphi");
-    // thevarlist.push_back("vjj_lead_qgl");
-    // thevarlist.push_back("vjj_sublead_qgl");
-    // thevarlist.push_back("vjj_v_ystar");
-    // thevarlist.push_back("vjj_jj_pt");
-    // thevarlist.push_back("vjj_v_pt");
-    // thevarlist.push_back("vjj_sublead_pt");
-    // thevarlist.push_back("vjj_jj_deta");
-
-    thevarlist.push_back("vjj_newvarisotropy");
-    thevarlist.push_back("vjj_newvarcircularity");
-    thevarlist.push_back("vjj_newvarsphericity");
-    thevarlist.push_back("vjj_newvaraplanarity");
-    thevarlist.push_back("vjj_newvarC");
-    thevarlist.push_back("vjj_newvarD");
-    thevarlist.push_back("vjj_newvarjj_vdphi");
-    thevarlist.push_back("vjj_newvarsublead_dphivj");
-    thevarlist.push_back("vjj_newvarlead_dphivj");
-    thevarlist.push_back("vjj_newvarsublead_detavj");
-    thevarlist.push_back("vjj_newvarlead_detavj");
-    thevarlist.push_back("vjj_newvarleadJet_qgl");
-    thevarlist.push_back("vjj_newvarvjj_deta");
+    /*
+    thevarlist.push_back("vjj_vjj_isotropy");
+    thevarlist.push_back("vjj_vjj_circularity");
+    thevarlist.push_back("vjj_vjj_sphericity");
+    thevarlist.push_back("vjj_vjj_aplanarity");
+    thevarlist.push_back("vjj_vjj_C");
+    thevarlist.push_back("vjj_vjj_D");
+    thevarlist.push_back("vjj_dphi");
+    thevarlist.push_back("vjj_sublead_dphiv");
+    thevarlist.push_back("vjj_lead_dphiv");
+    thevarlist.push_back("vjj_sublead_detav");
+    thevarlist.push_back("vjj_lead_detav");
+    thevarlist.push_back("vjj_lead_qgl");
+    thevarlist.push_back("vjj_jj_deta");
+    */
 
 
 //---------------------------------------------------------------------------
@@ -345,7 +336,7 @@ int main(int argc, char **argv)
     bool create_templates = false; //Create MVA templates
 
 //-----------------    CONTROL HISTOGRAMS
-    bool create_inputVar_histograms = false; //Create histograms of input variables, for plotting
+    bool create_inputVar_histograms = true; //Create histograms of input variables, for plotting
 
 //-----------------    PLOTS
     TString plotChannel = ""; //Can choose to plot particular subchannel //uu, ue, ee, ...

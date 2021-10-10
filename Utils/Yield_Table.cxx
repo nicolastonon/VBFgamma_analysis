@@ -201,49 +201,28 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
             if(!t) {cout<<FRED("Tree '"<<treename<<"' not found ! Skip !")<<endl; continue;}
             t->SetBranchStatus("*", 0); //disable all branches, speed up reading
 
-            //FIXME
-    		// Double_t weight = 1., weight_avg = 0.; //Event weight (gen-level weight, smeared by systematics)
-            // Float_t eventMCFactor, weightMENominal; //Sample-dependent factor computed at Potato-level (lumi*xsec/SWE)
-            // t->SetBranchStatus("eventWeight", 1);
-    		// t->SetBranchAddress("eventWeight", &weight);
-            // t->SetBranchStatus("eventMCFactor", 1);
-    		// t->SetBranchAddress("eventMCFactor", &eventMCFactor);
-            // t->SetBranchStatus("weightMENominal", 1);
-    		// t->SetBranchAddress("weightMENominal", &weightMENominal);
-
-            Float_t weight;
+            Float_t weight = 1.;
             Int_t vjj_nlumiWeights = 113;
-            Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
+            Float_t vjj_photon_effWgt, vjj_weight, vjj_mu_effWgt, vjj_ele_effWgt, vjj_lumiWeights[vjj_nlumiWeights];
             if(!isData)
             {
                 t->SetBranchStatus("vjj_photon_effWgt", 1); t->SetBranchAddress("vjj_photon_effWgt", &vjj_photon_effWgt);
                 t->SetBranchStatus("vjj_weight", 1); t->SetBranchAddress("vjj_weight", &vjj_weight);
                 t->SetBranchStatus("vjj_lumiWeights", 1); t->SetBranchAddress("vjj_lumiWeights", vjj_lumiWeights);
                 t->SetBranchStatus("vjj_mu_effWgt", 1); t->SetBranchAddress("vjj_mu_effWgt", &vjj_mu_effWgt);
+                t->SetBranchStatus("vjj_ele_effWgt", 1); t->SetBranchAddress("vjj_ele_effWgt", &vjj_ele_effWgt);
             }
 
-            Bool_t vjj_isGood;
-            Int_t vjj_fs, vjj_trig;
-            Float_t vjj_v_eta, vjj_jj_deta, vjj_jj_m, vjj_v_pt, vjj_lead_pt, vjj_sublead_pt;
-            t->SetBranchStatus("vjj_v_eta", 1); t->SetBranchAddress("vjj_v_eta", &vjj_v_eta);
-            t->SetBranchStatus("vjj_jj_deta", 1); t->SetBranchAddress("vjj_jj_deta", &vjj_jj_deta);
-            t->SetBranchStatus("vjj_jj_m", 1); t->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
-            t->SetBranchStatus("vjj_v_pt", 1); t->SetBranchAddress("vjj_v_pt", &vjj_v_pt);
-            t->SetBranchStatus("vjj_isGood", 1); t->SetBranchAddress("vjj_isGood", &vjj_isGood);
-            t->SetBranchStatus("vjj_fs", 1); t->SetBranchAddress("vjj_fs", &vjj_fs);
-            t->SetBranchStatus("vjj_jj_m", 1); t->SetBranchAddress("vjj_jj_m", &vjj_jj_m);
-            t->SetBranchStatus("vjj_lead_pt", 1); t->SetBranchAddress("vjj_lead_pt", &vjj_lead_pt);
-            t->SetBranchStatus("vjj_sublead_pt", 1); t->SetBranchAddress("vjj_sublead_pt", &vjj_sublead_pt);
-            t->SetBranchStatus("vjj_trig", 1); t->SetBranchAddress("vjj_trig", &vjj_trig);
+            //-- Categories (boolean flags)
+            Char_t is_goodCategory = false; //Cut on event category flag
+            TString cat_name = Get_Category_Boolean_Name(region);
+            t->SetBranchStatus(cat_name, 1); t->SetBranchAddress(cat_name, &is_goodCategory);
 
             Char_t vjj_photonIsMatched;
             if(v_samples[isample] == "QCD" || v_samples[isample] == "ttbar")
             {
                 t->SetBranchStatus("vjj_photonIsMatched", 1); t->SetBranchAddress("vjj_photonIsMatched", &vjj_photonIsMatched);
             }
-
-            //--- Cut on relevant event selection (e.g. 3l SR, ttZ CR, etc.) -- stored as Char_t
-            // Char_t is_goodCategory; //Categ. of event
 
 
      // ###### #    # ###### #    # #####    #       ####   ####  #####
@@ -266,73 +245,30 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 // if(channel == "eee" && chan != 3) {continue;}
 
                 //--- Cut on region value
-                // if(region != "" && !is_goodCategory) {continue;}
-
-                bool pass = false;
-                if(region.Contains("SR")) //SR
-                {
-                    if(region.Contains("HighVPt")) //HighVPt
-                    {
-                        float ptCut = (v_years[iyear]=="2016"? 175:200), mjj = 200, fs = 22;
-                        bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                        bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                        pass = ((vjj_trig == 2 || (vjj_trig==3 && !lowPtCut)) && generalCuts && vjj_v_pt > ptCut);
-                    }
-                    else //LowVPt
-                    {
-                        float mjj = 500, fs = 22;
-                        bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                        bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                        pass = (vjj_trig != 2 && lowPtCut && generalCuts);
-                    }
-                    if((v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {pass = false;}
-                }
-                else //DY CR
-                {
-                    if(region.Contains("CRee")) //ee
-                    {
-                        if(region.Contains("HighVPt")) //HighVPt
-                        {
-                            float ptCut = (v_years[iyear]=="2016"? 175:200), mjj = 200, fs = 121;
-                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                            pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
-                        }
-                        else //LowVPt
-                        {
-                            float mjj = 500, fs = 121;
-                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                            pass = (vjj_trig == 3 && lowPtCut && generalCuts);
-                        }
-                    }
-                    else //mm
-                    {
-                        if(region.Contains("HighVPt")) //HighVPt
-                        {
-                            float ptCut = (v_years[iyear]=="2016"? 175:200), mjj = 200, fs = 169;
-                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                            pass = (vjj_trig == 3 && !lowPtCut && generalCuts && vjj_v_pt > ptCut);
-                        }
-                        else //LowVPt
-                        {
-                            float mjj = 500, fs = 169;
-                            bool lowPtCut = (abs(vjj_v_eta)<1.442 && abs(vjj_jj_deta) > 3.0 && vjj_jj_m > 500 && vjj_v_pt > 75);
-                            bool generalCuts = (vjj_fs==fs && vjj_isGood && vjj_jj_m>mjj && vjj_lead_pt>50 && vjj_sublead_pt>50);
-                            pass = (vjj_trig == 3 && lowPtCut && generalCuts);
-                        }
-                    }
-                }
-                if(!pass) {continue;}
+                if(region != "" && !is_goodCategory) {continue;}
+                if(region.Contains("SR") && (v_samples[isample] == "QCD" || v_samples[isample] == "ttbar") && vjj_photonIsMatched == 1) {continue;}
 
                 // if(isnan(weight*eventMCFactor) || isinf(weight*eventMCFactor))
                 // {
                 //     cout<<BOLD(FRED("* Found event with weight*eventMCFactor = "<<weight<<"*"<<eventMCFactor<<" ; remove it..."))<<endl; break; //continue;
                 // }
 
-                if(!isData) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;} //FIXME
+                //FIXME
+                if(!isData)
+                {
+                    if(region.Contains("SR")) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0];}
+                    else if(region.Contains("CRee")) {weight = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0];}
+                    else if(region.Contains("CRmm")) {weight = vjj_mu_effWgt * vjj_weight * vjj_lumiWeights[0];}
+                    // if(region.Contains("SR")) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
+                    // else if(region.Contains("CRee")) {weight = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
+                    // else {weight = vjj_weight * vjj_lumiWeights[0];}
+                }
                 if(weight > 100000) {cout<<"Huge weight "<<weight<<endl; continue;}
+                // cout<<"vjj_photon_effWgt "<<vjj_photon_effWgt<<endl;
+                // cout<<"vjj_weight "<<vjj_weight<<endl;
+                // cout<<"vjj_lumiWeights[0] "<<vjj_lumiWeights[0]<<endl;
+                // cout<<"vjj_mu_effWgt "<<vjj_mu_effWgt<<endl;
+                // cout<<"weight "<<weight<<endl;
 
                 v_yields_proc_allYears[isample]+= weight;
                 v_statErr_proc_allYears[isample]+= weight*weight;
@@ -354,7 +290,7 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                         statErr_signals+= weight*weight;
                         // cout<<"yield_signals "<<yield_signals<<endl;
                     }
-                    else if(v_samples[isample] != "DATA" && v_samples[isample] != signal) //Backgrounds //Don't consider: signals / private samples / MC fakes / ...
+                    else if(v_samples[isample] != "DATA" && v_samples[isample] != signal) //Backgrounds //Don't consider: data / signals / ...
                     {
                         yield_bkg+= weight;
                     }
@@ -514,7 +450,7 @@ int main(int argc, char **argv)
     TString treename = "Events";
 
     //-- Event category: '' <-> all events ; 'xxx' <-> only include events satisfying condition xxx //E.g.: 'is_signal_SR'
-    TString region = "CRee_LowVPt"; //'xxx'
+    TString region = "SR_HighVPt"; //'xxx'
 
     TString lumi = "all"; //'2016','2017','2018','Run2,'all''
     TString channel = ""; //'',uuu,uue,eeu,eee
@@ -570,10 +506,10 @@ int main(int argc, char **argv)
         v_samples.push_back("ZGTo2LG"); v_label.push_back("ZGTo2LG");
         v_samples.push_back("WGToLNuG"); v_label.push_back("WGToLNuG");
         v_samples.push_back("QCD"); v_label.push_back("QCD");
-        v_samples.push_back("DY"); v_label.push_back("DY");
-        v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
-        v_samples.push_back("DYJetsLOJetBins"); v_label.push_back("DYJetsLOJetBins");
         v_samples.push_back("DYJetsNLOJetBins"); v_label.push_back("DYJetsNLOJetBins");
+        // v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
+        // v_samples.push_back("DYJetsLOJetBins"); v_label.push_back("DYJetsLOJetBins");
+        // v_samples.push_back("DYJetsLOInclusive"); v_label.push_back("DYJetsLOInclusive");
         v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
     }
 
