@@ -151,6 +151,7 @@ VBFgamma_analysis::VBFgamma_analysis(vector<TString> thesamplelist, vector<TStri
 
 	this->classifier_name = classifier_name;
     if(classifier_name != "BDT" && classifier_name != "NN") {cout<<BOLD(FRED("Warning : classifier_name value ["<<classifier_name<<"] not supported !"))<<endl;}
+    if(classifier_name == "NN") {cout<<BOLD(FRED("Warning : classifier_name value ["<<classifier_name<<"] not supported !"))<<endl;stop_program = true;} //Cannot use DNN for now, need to reinstall bazel/TF cache files, etc.
 
 	plot_extension = theplotextension;
 
@@ -326,10 +327,10 @@ VBFgamma_analysis::~VBFgamma_analysis()
  */
 void VBFgamma_analysis::Set_Luminosity(TString luminame, TString region)
 {
-    float lumi16 = 35.9; //Official is 36.33 //Preliminary was: 35.92
-    float lumi17 = 41.4; //Official is 41.53
+    float lumi16 = 36.3; //Official is 36.33 //Preliminary was: 35.92
+    float lumi17 = 41.5 ; //Official is 41.53
     float lumi18 = 59.7; //Official is 59.74
-    if(region == "SR_LowVPt") {lumi16 = 28.2; lumi17 = 7.7;}
+    if(region == "SR_LowVPt") {lumi16 = 28.8; lumi17 = 7.7;} //Lower lumis for 2016/17  low-pt photon triggers
 
     if(luminame == "2016") {lumiValue = lumi16;}
 	else if(luminame == "2017") {lumiValue = lumi17;}
@@ -543,20 +544,21 @@ void VBFgamma_analysis::Train_BDT(TString channel)
     	for(int isample=0; isample<sample_list.size(); isample++)
         {
             TString samplename_tmp = sample_list[isample];
+            if(v_lumiYears[iyear] != "2016" && sample_list[isample].BeginsWith("GJets")) {samplename_tmp = "GJetsLO";} //Only LO sample available
 
             TString mycut_string_tmp = mycut.GetTitle();
             TCut mycut_tmp = mycut_string_tmp.Data();
 
             //-- Protections
-            if(sample_list[isample] == "DATA") {continue;} //Don't use data for training
+            if(samplename_tmp == "DATA") {continue;} //Don't use data for training
 
             //-- TMP sample list
             // if(samplename_tmp != "VBFgamma" && samplename_tmp != "XXX") {continue;}
 
-    		cout<<endl<<"-- Sample : "<<sample_list[isample]<<endl;
+    		cout<<endl<<"-- Sample : "<<samplename_tmp<<endl;
 
             // --- Register the training and test trees
-            TString inputfile = dir_ntuples + v_lumiYears[iyear] + "/" + sample_list[isample] + ".root";
+            TString inputfile = dir_ntuples + v_lumiYears[iyear] + "/" + samplename_tmp + ".root";
 
 
 //--------------------------------------------
@@ -585,7 +587,7 @@ void VBFgamma_analysis::Train_BDT(TString channel)
             Double_t backgroundWeight = 1.0;
 
             //-- Weight definition
-            TString weightExp = "vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0]"; //'/ vjj_mu_effWgt'
+            TString weightExp = "vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0]";
             if(use_relative_weights) {weightExp = "fabs(" + weightExp + ")";}
 
             //-- Choose between absolute/relative weights for training
@@ -953,7 +955,11 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                 TString NNinfo_input_path = Get_MVAFile_InputPath(template_name, v_lumiYears[iyear], use_specificMVA_eachYear, true);
                 if(NNinfo_input_path == "") {return;} //MVA file not found
 
-                if(Extract_Values_From_NNInfoFile(NNinfo_input_path, var_list_NN, v_NN_nodeLabels, NN_inputLayerName, NN_outputLayerName, NN_iMaxNode, NN_nNodes, minmax_bounds)) {clfy1 = new TFModel(MVA_input_path.Data(), var_list_NN.size(), NN_inputLayerName.Data(), NN_nNodes, NN_outputLayerName.Data());} //Load neural network model
+                if(Extract_Values_From_NNInfoFile(NNinfo_input_path, var_list_NN, v_NN_nodeLabels, NN_inputLayerName, NN_outputLayerName, NN_iMaxNode, NN_nNodes, minmax_bounds))
+                {
+                    cout<<"ERROR: fix this line first to use NN ! "<<endl; return;
+                    // clfy1 = new TFModel(MVA_input_path.Data(), var_list_NN.size(), NN_inputLayerName.Data(), NN_nNodes, NN_outputLayerName.Data());
+                } //Load neural network model
                 else {return;} //Error: missing NN infos
 
                 var_list = var_list_NN; //Use NN input features
@@ -1002,8 +1008,11 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
     	//-- SAMPLE LOOP
     	for(int isample=0; isample<sample_list.size(); isample++)
     	{
+            TString samplename_tmp = sample_list[isample];
+            if(v_lumiYears[iyear] != "2016" && sample_list[isample].BeginsWith("GJets")) {samplename_tmp = "GJetsLO";} //Only LO sample available
+
             //-- Input TFile path
-            TString inputfile = dir_ntuples + v_lumiYears[iyear] + "/" + sample_list[isample] + ".root";
+            TString inputfile = dir_ntuples + v_lumiYears[iyear] + "/" + samplename_tmp + ".root";
 
             cout<<endl<<endl<<UNDL(FBLU("Sample : "<<sample_list[isample]<<""))<<endl;
             cout<<DIM("(path: "<<inputfile<<")")<<endl;
@@ -1340,17 +1349,11 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
                     //-- Weight definition
                     double weight_tmp = 1.;
 
-                    //FIXME //-- What are definitions ?
-                    //vjj_weight = wsf*event.puWeight*prefirew
-                    //vjj_lumiWeights[0] = nominal MC generator weight
                     if(!isData)
                     {
                         if(region.Contains("SR")) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0];}
                         else if(region.Contains("CRee")) {weight_tmp = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0];}
                         else if(region.Contains("CRmm")) {weight_tmp = vjj_mu_effWgt * vjj_weight * vjj_lumiWeights[0];}
-                        // if(region.Contains("SR")) {weight_tmp = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
-                        // else if(region.Contains("CRee")) {weight_tmp = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
-                        // else if(region.Contains("CRmm")) {weight_tmp = vjj_weight * vjj_lumiWeights[0];}
                     }
                     if(weight_tmp > 100000) {cout<<BOLD(FRED("Huge weight "<<weight_tmp<<""))<<endl; continue;}
                     // cout<<"eventWeight "<<eventWeight<<" / eventMCFactor "<<eventMCFactor<<" / weight_tmp "<<weight_tmp<<endl;
@@ -1533,7 +1536,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
             if(classifier_name == "BDT")  {delete reader; reader = NULL;}
             else
             {
-                if(clfy1 && use_specificMVA_eachYear) {delete clfy1; clfy1 = NULL; MVA_alreadyLoaded = false;} //Only delete if not going to be reused for another iteration
+                // if(clfy1 && use_specificMVA_eachYear) {delete clfy1; clfy1 = NULL; MVA_alreadyLoaded = false;} //Only delete if not going to be reused for another iteration
                 //-- NB: do not delete clfy2 //Causes crash (because it uses the same TF session as clfy1, hence double-free... ?)
                 // if(clfy2) {delete clfy2; clfy2 = NULL;}
             }
@@ -1580,7 +1583,7 @@ void VBFgamma_analysis::Produce_Templates(TString template_name, bool makeHisto_
         if(array_LepEffLoose_el) {delete[] array_LepEffLoose_el; array_LepEffLoose_el = NULL;}
         if(array_LepEffTight_el) {delete[] array_LepEffTight_el; array_LepEffTight_el = NULL;}
     }
-    if(clfy1) {delete clfy1; clfy1 = NULL;}
+    // if(clfy1) {delete clfy1; clfy1 = NULL;}
     for(int ivar=0; ivar<var_list_pfloats.size(); ivar++) //Delete input vars
     {
         if(var_list[ivar] != "njets" && var_list[ivar] != "channel") //Exception: special variables already deleted above //Ideally, use smart pointers (auto-delete shared mem, only once)

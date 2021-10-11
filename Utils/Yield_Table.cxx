@@ -24,7 +24,7 @@ TString Get_Category_LatexName(TString cat)
 //    ##    #### ######## ######## ########        ##    ##     ## ########  ######## ########
 //--------------------------------------------
 
-void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TString region, TString signal, TString lumi, bool group_samples_together, bool remove_totalSF, TString channel, TString treename, bool printout_nofEntries)
+void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, vector<bool> v_isDefaultSample, TString region, TString signal, TString lumi, bool group_samples_together, bool remove_totalSF, TString channel, TString treename, bool printout_nofEntries, bool use_GJetsLowStat16)
 {
     bool create_latex_table = false; //true <-> also output latex-format yield tables
         bool blind = false; //true <-> don't include DATA in latex tables (but still include in printouts)
@@ -165,7 +165,8 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
     		{
     			//ERASE MISSING SAMPLES FROM VECTORS
     			v_samples.erase(v_samples.begin() + isample);
-    			v_label.erase(v_label.begin() + isample);
+                v_label.erase(v_label.begin() + isample);
+                v_isDefaultSample.erase(v_isDefaultSample.begin() + isample);
 
     			cout<<FRED("File "<<filepath<<" not found ! Erased index '"<<isample<<"' from vectors")<<endl;
     		}
@@ -193,9 +194,23 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
             bool isData = false;
             if(v_samples[isample] == "DATA") {isData = true;}
 
+            bool isDefaultSample = v_isDefaultSample[isample]; //true <-> will include this sample in total counts
+            if(v_years[iyear] == "2016")
+            {
+                if(use_GJetsLowStat16) //Force set 'GJetsLowStat' as default GJets sample
+                {
+                    if(v_samples[isample] == "GJetsLowStat") {isDefaultSample = true;}
+                    else if(v_samples[isample] == "GJets") {isDefaultSample = false;}
+                }
+            }
+            else
+            {
+                if(v_samples[isample] == "GJetsLO") {isDefaultSample = true;} //No NLO GJets sample in 2017/18
+            }
+
     		// cout<<FBLU("Sample : "<<v_samples[isample]<<"")<<endl;
 
-    		TFile* f = new TFile(filepath);
+    		TFile* f = new TFile(filepath, "READ");
     		TTree* t = NULL;
             t = (TTree*) f->Get(treename);
             if(!t) {cout<<FRED("Tree '"<<treename<<"' not found ! Skip !")<<endl; continue;}
@@ -253,15 +268,11 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                 //     cout<<BOLD(FRED("* Found event with weight*eventMCFactor = "<<weight<<"*"<<eventMCFactor<<" ; remove it..."))<<endl; break; //continue;
                 // }
 
-                //FIXME
                 if(!isData)
                 {
                     if(region.Contains("SR")) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0];}
                     else if(region.Contains("CRee")) {weight = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0];}
                     else if(region.Contains("CRmm")) {weight = vjj_mu_effWgt * vjj_weight * vjj_lumiWeights[0];}
-                    // if(region.Contains("SR")) {weight = vjj_photon_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
-                    // else if(region.Contains("CRee")) {weight = vjj_ele_effWgt * vjj_weight * vjj_lumiWeights[0] / vjj_mu_effWgt;}
-                    // else {weight = vjj_weight * vjj_lumiWeights[0];}
                 }
                 if(weight > 100000) {cout<<"Huge weight "<<weight<<endl; continue;}
                 // cout<<"vjj_photon_effWgt "<<vjj_photon_effWgt<<endl;
@@ -284,15 +295,18 @@ void Compute_Write_Yields(vector<TString> v_samples, vector<TString> v_label, TS
                     yield_tmp+= weight; statErr_tmp+= weight*weight;
                     nentries_tmp++;
 
-                    if(v_label[isample] == signal || v_label[isample] == "signal") //Signals, group together
+                    if(isDefaultSample) //Only include 'default samples' in total sums
                     {
-                        yield_signals+= weight;
-                        statErr_signals+= weight*weight;
-                        // cout<<"yield_signals "<<yield_signals<<endl;
-                    }
-                    else if(v_samples[isample] != "DATA" && v_samples[isample] != signal) //Backgrounds //Don't consider: data / signals / ...
-                    {
-                        yield_bkg+= weight;
+                        if(v_label[isample] == signal || v_label[isample] == "signal") //Signals, group together
+                        {
+                            yield_signals+= weight;
+                            statErr_signals+= weight*weight;
+                            // cout<<"yield_signals "<<yield_signals<<endl;
+                        }
+                        else if(v_samples[isample] != "DATA" && v_samples[isample] != signal) //Backgrounds //Don't consider: data / signals / ...
+                        {
+                            yield_bkg+= weight;
+                        }
                     }
                 }
             } //event loop
@@ -458,6 +472,7 @@ int main(int argc, char **argv)
     bool group_samples_together = false; //true <-> group similar samples together
     bool process_samples_byGroup = false; //true <-> read grouped samples (if already hadded together), else read individual samples and combine them when creating histograms if needed (default)
     bool printout_nofEntries = true; //true <-> also print nof entries (in addition to yield)
+    bool use_GJetsLowStat16 = true; //true <-> force use of GJetsLowStat samples as default for 2016 (else, use 'v_isDefaultSample' info)
 
 //--------------------------------------------
 //--------------------------------------------
@@ -484,33 +499,38 @@ int main(int argc, char **argv)
 //--------------------------------------------
 //--------------------------------------------
 
-	//Sample names and labels //NB : labels must be latex-compatible
-	vector<TString> v_samples; vector<TString> v_label;
+	//Sample names, labels, and included in total sums or not //NB : labels must be latex-compatible
+	vector<TString> v_samples; vector<TString> v_label; vector<bool> v_isDefaultSample;
 
     //-- Read ntuples merged by sample groups
     if(process_samples_byGroup)
     {
-        v_samples.push_back("DATA"); v_label.push_back("DATA");
+        v_samples.push_back("DATA"); v_label.push_back("DATA"); v_isDefaultSample.push_back(true);
     }
     //-- Read individual ntuples
     else
     {
-        v_samples.push_back("DATA"); v_label.push_back("DATA");
-        v_samples.push_back("VBFgamma"); v_label.push_back("VBFgamma");
-        v_samples.push_back("GJets"); v_label.push_back("GJets");
-        v_samples.push_back("ttbar"); v_label.push_back("ttbar");
-        v_samples.push_back("ttGJets"); v_label.push_back("ttGJets");
-        v_samples.push_back("DiPhoton"); v_label.push_back("DiPhoton");
-        v_samples.push_back("WJetsToLNu"); v_label.push_back("WJetsToLNu");
-        v_samples.push_back("WJetsToQQ"); v_label.push_back("WJetsToQQ");
-        v_samples.push_back("ZGTo2LG"); v_label.push_back("ZGTo2LG");
-        v_samples.push_back("WGToLNuG"); v_label.push_back("WGToLNuG");
-        v_samples.push_back("QCD"); v_label.push_back("QCD");
-        v_samples.push_back("DYJetsNLOJetBins"); v_label.push_back("DYJetsNLOJetBins");
-        // v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO");
-        // v_samples.push_back("DYJetsLOJetBins"); v_label.push_back("DYJetsLOJetBins");
-        // v_samples.push_back("DYJetsLOInclusive"); v_label.push_back("DYJetsLOInclusive");
-        v_samples.push_back("LLJJ"); v_label.push_back("LLJJ");
+        v_samples.push_back("DATA"); v_label.push_back("DATA"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("VBFgamma"); v_label.push_back("VBFgamma"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("GJets"); v_label.push_back("GJets"); v_isDefaultSample.push_back(false);
+        v_samples.push_back("GJetsLowStat"); v_label.push_back("GJetsLowStat"); v_isDefaultSample.push_back(false);
+        v_samples.push_back("GJetsLO"); v_label.push_back("GJetsLO"); v_isDefaultSample.push_back(false);
+        v_samples.push_back("DiPhoton"); v_label.push_back("DiPhoton"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("ttGJets"); v_label.push_back("ttGJets"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("ttbar"); v_label.push_back("ttbar"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("WJetsToLNu"); v_label.push_back("WJetsToLNu"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("WJetsToQQ"); v_label.push_back("WJetsToQQ"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("ZGTo2LG"); v_label.push_back("ZGTo2LG"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("WGToLNuG"); v_label.push_back("WGToLNuG"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("LLJJ"); v_label.push_back("LLJJ"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("DYJetsNLOJetBins"); v_label.push_back("DYJetsNLOJetBins"); v_isDefaultSample.push_back(true);
+        v_samples.push_back("DYJetsNLO"); v_label.push_back("DYJetsNLO"); v_isDefaultSample.push_back(false);
+        v_samples.push_back("DYJetsLOJetBins"); v_label.push_back("DYJetsLOJetBins"); v_isDefaultSample.push_back(false);
+        v_samples.push_back("QCD"); v_label.push_back("QCD"); v_isDefaultSample.push_back(true);
+
+        // v_samples.push_back("gjets_mixed"); v_label.push_back("gjets_mixed"); v_isDefaultSample.push_back(true);
+        // v_samples.push_back("DYJetsLOInclusive"); v_label.push_back("DYJetsLOInclusive"); v_isDefaultSample.push_back(false);
+        // v_samples.push_back("DYJetsLO"); v_label.push_back("DYJetsLO"); v_isDefaultSample.push_back(false);
     }
 
 //--------------------------------------------
@@ -518,8 +538,8 @@ int main(int argc, char **argv)
 
     for(int ilumi=0; ilumi<v_lumis.size(); ilumi++)
     {
-        Compute_Write_Yields(v_samples, v_label, region, signal, v_lumis[ilumi], group_samples_together, remove_totalSF, channel, treename, printout_nofEntries);
-    }
+        Compute_Write_Yields(v_samples, v_label, v_isDefaultSample, region, signal, v_lumis[ilumi], group_samples_together, remove_totalSF, channel, treename, printout_nofEntries, use_GJetsLowStat16);
 
+    }
 	return 0;
 }

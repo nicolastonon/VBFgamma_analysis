@@ -506,7 +506,7 @@ bool Produce_Efficiency_TGraph(TGraph* &g, double& AUC, TH1F* h_sig, TH1F* h_bkg
 /**
  * Get all ROC curves histograms
  */
-void Get_ROC_Curves(vector<TGraph*>& v_graph, vector<double>& v_AUC, vector<TString>& v_label, vector<TString> v_filepath, vector<TString> v_isTMVA_file, vector<TString> v_Filelabel, vector<bool> v_isTrainSample, TString region, vector<TString> v_processes, bool superimpose_allNodes_DNN, TString lumiYear, TString cuts, bool call_from_TopEFT_code, TString histo_name_prefix)
+void Get_ROC_Curves(vector<TGraph*>& v_graph, vector<double>& v_AUC, vector<TString>& v_label, vector<TString> v_filepath, vector<TString> v_isTMVA_file, vector<TString> v_Filelabel, vector<bool> v_isTrainSample, TString region, vector<TString> v_processes, bool superimpose_allNodes_DNN, TString lumiYear, TString cuts, TString histo_name_prefix)
 {
 	if(!v_filepath.size() || !v_isTMVA_file.size() ) {cout<<FRED("Passed void vector as argument ! Abort !")<<endl; return;}
 
@@ -543,8 +543,6 @@ void Get_ROC_Curves(vector<TGraph*>& v_graph, vector<double>& v_AUC, vector<TStr
                 v_h_bkg.resize(v_processes.size()-1); //Will consider as 'backgrounds' all the processes not considered as 'signal'
                 TString hname_tmp = "hist_test_NODE_" + v_processes[isig] + "_CLASS_" + v_processes[isig]; //Performance for class A in node A
 
-                if(call_from_TopEFT_code) {hname_tmp = histo_name_prefix + v_processes[isig];} //FIXME
-
                 if(!Get_Histogram_From_KerasFile(v_h_sig[0], v_filepath[ifile], hname_tmp)) {return;} //Check naming convention used in pure-Keras NN
             }
             else if(v_isTMVA_file[ifile] == "Custom") //Retrieve directly histogram from custom user file
@@ -569,8 +567,6 @@ void Get_ROC_Curves(vector<TGraph*>& v_graph, vector<double>& v_AUC, vector<TStr
     			else if(v_isTMVA_file[ifile] == "Keras") //Retrieve directly histogram from file produced by DNN training python script
     			{
                     TString hname_tmp = "hist_test_NODE_" + v_processes[isig] + "_CLASS_" + v_processes[ibkg]; //Performance for class A in node B
-
-                    if(call_from_TopEFT_code) {hname_tmp = histo_name_prefix + v_processes[ibkg];} //FIXME
 
                     if(!Get_Histogram_From_KerasFile(v_h_bkg[idx_bkg], v_filepath[ifile], hname_tmp)) {return;} //Check naming convention used in pure-Keras NN
                 }
@@ -751,7 +747,7 @@ void Superimpose_ROC_Curves(vector<TGraph*> v_graph, vector<TString> v_label, ve
 /**
  * Main function producing all plots required in main()
  */
-void Make_Plot(vector<TString> v_filepath, vector<TString> v_Filelabel, vector<TString> v_isTMVA_file, vector<bool> v_isTrainSample, TString region, vector<TString> v_processes, bool superimpose_allNodes_DNN, TString lumiYear, TString cuts, bool call_from_TopEFT_code,TString histo_name_prefix)
+void Make_Plot(vector<TString> v_filepath, vector<TString> v_Filelabel, vector<TString> v_isTMVA_file, vector<bool> v_isTrainSample, TString region, vector<TString> v_processes, bool superimpose_allNodes_DNN, TString lumiYear, TString cuts, TString histo_name_prefix)
 {
     cout<<endl<<BYEL("                          ")<<endl<<endl;
 	cout<<FYEL("--- Will superimpose all ROC curves on plot ---")<<endl;
@@ -763,7 +759,7 @@ void Make_Plot(vector<TString> v_filepath, vector<TString> v_Filelabel, vector<T
 	vector<double> v_AUC;
     vector<TString> v_label;
 
-    Get_ROC_Curves(v_graph, v_AUC, v_label, v_filepath, v_isTMVA_file, v_Filelabel, v_isTrainSample, region, v_processes, superimpose_allNodes_DNN, lumiYear, cuts, call_from_TopEFT_code, histo_name_prefix);
+    Get_ROC_Curves(v_graph, v_AUC, v_label, v_filepath, v_isTMVA_file, v_Filelabel, v_isTrainSample, region, v_processes, superimpose_allNodes_DNN, lumiYear, cuts, histo_name_prefix);
 
     Superimpose_ROC_Curves(v_graph, v_label, v_AUC);
 

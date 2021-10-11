@@ -11,16 +11,16 @@ CFLAGS = -c $(DEBUG) #Compilation options
 ROOTFLAGS = `root-config --glibs --cflags`
 
 LFLAGS = $(DEBUG) -lTMVA -lPyMVA
-LFLAGS+= -L/home/ntonon/Documents/Programmes/tensorflow/bazel-bin/tensorflow -Wl,--allow-multiple-definition -Wl,--whole-archive -ltensorflow_framework -Wl,--whole-archive -Wl,--no-as-needed -ltensorflow_cc #-lprotobuf
+# LFLAGS+= -L/home/ntonon/Documents/Programmes/tensorflow/bazel-bin/tensorflow -Wl,--allow-multiple-definition -Wl,--whole-archive -ltensorflow_framework -Wl,--whole-archive -Wl,--no-as-needed -ltensorflow_cc #-lprotobuf
 
-INCFLAGS = -I./include
-INCFLAGS += -I./Utils
-INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow
-INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow/bazel-genfiles
-INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow/bazel-tensorflow/external/eigen_archive
-INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow/bazel-tensorflow/external/com_google_absl
-INCFLAGS += -I/usr/local/include/google/protobuf
-INCFLAGS += -I/usr/local/include/google/tensorflow
+# INCFLAGS = -I./include
+# INCFLAGS += -I./Utils
+# INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow
+# INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow/bazel-genfiles
+# INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow/bazel-tensorflow/external/eigen_archive
+# INCFLAGS += -I/home/ntonon/Documents/Programmes/tensorflow/bazel-tensorflow/external/com_google_absl
+# INCFLAGS += -I/usr/local/include/google/protobuf
+# INCFLAGS += -I/usr/local/include/google/tensorflow
 
 SRCS = $(wildcard *.cxx) #Source files are all files with .cxx extension
 HDRS = $(wildcard *.h) #Header files are all files with .h extension
@@ -40,7 +40,7 @@ YIELD = Yield_Table.exe
 all: $(MY_ANALYSIS) $(YIELD) #$(ROCS) $(SPLIT)
 
 #Obtain executables from object files
-$(MY_ANALYSIS):Utils/CMSSW_TensorFlow.o Utils/TFModel.o Utils/Helper.o analysis_main.o VBFgamma_analysis.o #ROCS/ROC_Plotter.o
+$(MY_ANALYSIS): Utils/Helper.o analysis_main.o VBFgamma_analysis.o #ROCS/ROC_Plotter.o
 	@echo "###################################"
 	@echo "-- Creating executable ./$(MY_ANALYSIS) --"
 	@$(CC) $^ -o $@ $(ROOTFLAGS) $(LFLAGS) $(INCFLAGS)

@@ -58,7 +58,7 @@
 #include <sys/stat.h> //for mkdir
 
 #include "Utils/Helper.h" //Helper functions
-#include "Utils/TFModel.h" //Tensorflow functions
+// #include "Utils/TFModel.h" //Tensorflow functions
 
 #include "ROCS/ROC_Plotter.h" //ROC functions
 
@@ -93,8 +93,8 @@ class VBFgamma_analysis
 
     TMVA::Reader* reader=NULL;
     //NB: if booking 2 BDTs, must make sure that they use the same input variables... or else, find some way to make it work in the code)
-    TFModel* clfy1=NULL; //NN classifier
-    TFModel* clfy2=NULL; //NN classifier
+    // TFModel* clfy1=NULL; //NN classifier
+    // TFModel* clfy2=NULL; //NN classifier
 
     std::vector<TString> sample_list; //List of samples
     std::vector<TString> sample_groups; //List of "group naming", 1 per sample (many samples can have same naming)

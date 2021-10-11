@@ -121,8 +121,9 @@ int main(int argc, char **argv)
     //Signal
     thesamplelist.push_back("VBFgamma"); thesamplegroups.push_back("VBFgamma");
 
-    //GJets (QCD)
-    thesamplelist.push_back("GJets"); thesamplegroups.push_back("GJets");
+    //GJets (QCD) //NB: for 2017/18, will automatically use 'GJetsLO'
+    thesamplelist.push_back("GJetsLowStat"); thesamplegroups.push_back("GJets"); //Use low-stat NLO 2016 samples
+    // thesamplelist.push_back("GJets"); thesamplegroups.push_back("GJets"); //Use high-stat NLO 2016 samples
 
     //TTbar
     thesamplelist.push_back("ttbar"); thesamplegroups.push_back("ttbar");
